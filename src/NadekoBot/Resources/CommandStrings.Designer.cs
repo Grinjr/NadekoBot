@@ -4596,7 +4596,7 @@ namespace NadekoBot.Resources {
         }
         
         /// <summary>
-        ///    Looks up a localized string similar to mute.
+        ///    Looks up a localized string similar to mute timeout.
         /// </summary>
         public static string mute_cmd {
             get {
@@ -4605,7 +4605,7 @@ namespace NadekoBot.Resources {
         }
         
         /// <summary>
-        ///    Looks up a localized string similar to Mutes a mentioned user both from speaking and chatting..
+        ///    Looks up a localized string similar to Times out a given user by assigning them to the bad boys role..
         /// </summary>
         public static string mute_desc {
             get {
@@ -4614,7 +4614,7 @@ namespace NadekoBot.Resources {
         }
         
         /// <summary>
-        ///    Looks up a localized string similar to `{0}mute @Someone`.
+        ///    Looks up a localized string similar to `{0}timeout @Someone &quot;Reason&quot;`.
         /// </summary>
         public static string mute_usage {
             get {
@@ -7620,7 +7620,7 @@ namespace NadekoBot.Resources {
         }
         
         /// <summary>
-        ///    Looks up a localized string similar to unmute.
+        ///    Looks up a localized string similar to unmute untimeout.
         /// </summary>
         public static string unmute_cmd {
             get {

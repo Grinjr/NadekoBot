@@ -586,13 +586,13 @@
     <value>`{0}k "@some Guy" Your behaviour is toxic.`</value>
   </data>
   <data name="mute_cmd" xml:space="preserve">
-    <value>mute</value>
+    <value>mute timeout</value>
   </data>
   <data name="mute_desc" xml:space="preserve">
-    <value>Mutes a mentioned user both from speaking and chatting.</value>
+    <value>Times out a given user by assigning them to the bad boys role.</value>
   </data>
   <data name="mute_usage" xml:space="preserve">
-    <value>`{0}mute @Someone`</value>
+    <value>`{0}timeout @Someone "Reason"`</value>
   </data>
   <data name="voiceunmute_cmd" xml:space="preserve">
     <value>voiceunmute</value>
@@ -2503,7 +2503,7 @@
     <value>`{0}chatunmute @Someone`</value>
   </data>
   <data name="unmute_cmd" xml:space="preserve">
-    <value>unmute</value>
+    <value>unmute untimeout</value>
   </data>
   <data name="unmute_desc" xml:space="preserve">
     <value>Unmutes a mentioned user previously muted with `{0}mute` command.</value>

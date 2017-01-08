@@ -84,13 +84,13 @@ namespace NadekoBot.Modules.Gambling
 
         [NadekoCommand, Usage, Description, Aliases]
         [RequireContext(ContextType.Guild)]
-        [OwnerOnly]
+        [RequireUserPermission(GuildPermission.ManageMessages)]
         [Priority(2)]
         public Task Award(int amount, [Remainder] IGuildUser usr) =>
             Award(amount, usr.Id);
 
         [NadekoCommand, Usage, Description, Aliases]
-        [OwnerOnly]
+        [RequireUserPermission(GuildPermission.ManageMessages)]
         [Priority(1)]
         public async Task Award(int amount, ulong usrId)
         {
@@ -104,7 +104,7 @@ namespace NadekoBot.Modules.Gambling
 
         [NadekoCommand, Usage, Description, Aliases]
         [RequireContext(ContextType.Guild)]
-        [OwnerOnly]
+        [RequireUserPermission(GuildPermission.ManageMessages)]
         [Priority(0)]
         public async Task Award(int amount, [Remainder] IRole role)
         {

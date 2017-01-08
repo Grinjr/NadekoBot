@@ -115,7 +115,7 @@ namespace NadekoBot.Modules.Administration
 
             public static async Task<IRole> GetMuteRole(IGuild guild)
             {
-                const string defaultMuteRoleName = "nadeko-mute";
+                const string defaultMuteRoleName = "bad boys";
 
                 var muteRoleName = GuildMuteRoles.GetOrAdd(guild.Id, defaultMuteRoleName);
 
@@ -176,35 +176,36 @@ namespace NadekoBot.Modules.Administration
 
             [NadekoCommand, Usage, Description, Aliases]
             [RequireContext(ContextType.Guild)]
-            [RequireUserPermission(GuildPermission.ManageRoles)]
             [RequireUserPermission(GuildPermission.MuteMembers)]
-            public async Task Mute(IGuildUser user)
+            public async Task Mute(IGuildUser user, [Remainder] string msg = null)
             {
                 try
                 {
                     await MuteUser(user).ConfigureAwait(false);                    
-                    await Context.Channel.SendConfirmAsync($"🔇 **{user}** has been **muted** from text and voice chat.").ConfigureAwait(false);
+                    await Context.Channel.SendConfirmAsync($"🛑 **{user.Username}** has been sent to the **timeout corner**! Bad boy! https://www.youtube.com/watch?v=FPp4qb-phrA").ConfigureAwait(false);
+                    await user.SendErrorAsync($"🛑 **You have been put in timeout by `{Context.User.Username}`**\n" +
+                                              $"⚖ *Reason:* {msg}").ConfigureAwait(false);
                 }
                 catch
                 {
-                    await Context.Channel.SendErrorAsync("⚠️ I most likely don't have the permission necessary for that.").ConfigureAwait(false);
+                    await Context.Channel.SendErrorAsync("⚠️ ERROR: THE SKY IS FALLING ⚠️", "").ConfigureAwait(false);
                 }
             }
 
             [NadekoCommand, Usage, Description, Aliases]
             [RequireContext(ContextType.Guild)]
-            [RequireUserPermission(GuildPermission.ManageRoles)]
             [RequireUserPermission(GuildPermission.MuteMembers)]
-            public async Task Unmute(IGuildUser user)
+            public async Task Unmute(IGuildUser user, [Remainder] string msg = null)
             {
                 try
                 {
                     await UnmuteUser(user).ConfigureAwait(false);
-                    await Context.Channel.SendConfirmAsync($"🔉 **{user}** has been **unmuted** from text and voice chat.").ConfigureAwait(false);
+                    await Context.Channel.SendConfirmAsync($"🔓 **{user.Username}** has been sent free from the **timeout corner**! FREEDOM!").ConfigureAwait(false);
+                    await user.SendConfirmAsync($"🔓 **`{Context.User.Username}` has freed you from timeout.**").ConfigureAwait(false);
                 }
                 catch
                 {
-                    await Context.Channel.SendErrorAsync("⚠️ I most likely don't have the permission necessary for that.").ConfigureAwait(false);
+                    await Context.Channel.SendErrorAsync("⚠️ ERROR: THE SKY IS FALLING ⚠️", "").ConfigureAwait(false);
                 }
             }
 

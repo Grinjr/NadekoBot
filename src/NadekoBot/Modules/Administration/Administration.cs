@@ -342,6 +342,25 @@ namespace NadekoBot.Modules.Administration
             }
         }
 
+        // This should be included into the bot by default, actually! Check MuteCommands.cs
+        /*[NadekoCommand, Usage, Description, Aliases]
+        [RequireContext(ContextType.Guild)]
+        [RequireUserPermission(GuildPermission.KickMembers)]
+        public async Task Timeout(IGuildUser user, [Remainder] string msg = null)
+        {
+            IRole role = Context.Guild.Roles.FirstOrDefault(r => r.Name == (GuildMuteRoles.GetOrAdd(Context.Guild.Id, "bad boys")));
+            try
+            {
+                await user.AddRolesAsync(role).ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync($"ℹ️ Successfully added role **{role.Name}** to user **{user.Username}**").ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendErrorAsync("⚠️ Failed to add role. **Bot has insufficient permissions.**\n").ConfigureAwait(false);
+                Console.WriteLine(ex.ToString());
+            }
+        }*/
+
         [NadekoCommand, Usage, Description, Aliases]
         [RequireContext(ContextType.Guild)]
         [RequireUserPermission(GuildPermission.DeafenMembers)]

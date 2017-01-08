@@ -1,8 +1,9 @@
 {
+  "title": "GrinBot",
   "version": "1.0.0-*",
-  "description": "General purpose Discord bot written in C#.",
+  "description": "GrinBot! :3c Written in C#, for use by Grin pls ouo",
   "authors": [ "Kwoth" ],
-  "copyright": "Kwoth",
+  "copyright": "Kwoth - Editted by Grinjr owo",
   "buildOptions": {
     "emitEntryPoint": true,
     "allowUnsafe": true,
