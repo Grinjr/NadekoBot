@@ -252,6 +252,17 @@ namespace NadekoBot.Modules.Utility
         }
 
         [NadekoCommand, Usage, Description, Aliases]
+        [RequireContext(ContextType.Guild)]
+        [RequireBotPermission(ChannelPermission.CreateInstantInvite)]
+        [RequireUserPermission(ChannelPermission.CreateInstantInvite)]
+        public async Task CreateInvite()
+        {
+            var invite = await ((ITextChannel)Context.Channel).CreateInviteAsync(0, null, isUnique: true);
+
+            await Context.Channel.SendConfirmAsync($"{Context.User.Mention} https://discord.gg/{invite.Code}");
+        }
+
+        [NadekoCommand, Usage, Description, Aliases]
         public async Task Stats()
         {
             var stats = NadekoBot.Stats;
@@ -300,7 +311,7 @@ namespace NadekoBot.Modules.Utility
             if (page < 0)
                 return;
 
-            var guilds = NadekoBot.Client.GetGuilds().OrderBy(g => g.Name).Skip((page - 1) * 15).Take(15);
+            var guilds = await Task.Run(() => NadekoBot.Client.GetGuilds().OrderBy(g => g.Name).Skip((page - 1) * 15).Take(15)).ConfigureAwait(false);
 
             if (!guilds.Any())
             {
