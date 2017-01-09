@@ -20,26 +20,18 @@ namespace NadekoBot.Services.Database.Models
         public string RemindMessageFormat { get; set; } = "❗⏰**I've been told to remind you to '%message%' now by %user%.**⏰❗";
 
 
-        public string CurrencySign { get; set; } = "🌸";
-        public string CurrencyName { get; set; } = "Nadeko Flower";
-        public string CurrencyPluralName { get; set; } = "Nadeko Flowers";
+        public string CurrencySign { get; set; } = "👌"; //Default: 🌸
+        public string CurrencyName { get; set; } = "👌"; //Default: Nadeko Flower
+        public string CurrencyPluralName { get; set; } = "👌's"; //Default: Nadeko Flowers
 
         public HashSet<EightBallResponse> EightBallResponses { get; set; } = new HashSet<EightBallResponse>();
         public HashSet<RaceAnimal> RaceAnimals { get; set; } = new HashSet<RaceAnimal>();
 
         public string DMHelpString { get; set; } = "Type `-h` for help.";
-        public string HelpString { get; set; } = @"To add me to your server, use this link -> <https://discordapp.com/oauth2/authorize?client_id={0}&scope=bot&permissions=66186303>
-You can use `{1}modules` command to see a list of all modules.
+        public string HelpString { get; set; } = @"You can use `{1}modules` command to see a list of all modules.
 You can use `{1}commands ModuleName`
-(for example `{1}commands Administration`) to see a list of all of the commands in that module.
-For a specific command help, use `{1}h CommandName` (for example {1}h !!q)
-
-
-**LIST OF COMMANDS CAN BE FOUND ON THIS LINK**
-<http://nadekobot.readthedocs.io/en/latest/Commands%20List/>
-
-
-Nadeko Support Server: https://discord.gg/0ehQwTK2RBjAxzEY";
+(for example `{1}commands Gambling`) to see a list of all of the commands in that module.
+For a specific command help, use `{1}h CommandName` (for example {1}h !!q)";
 
         public int MigrationVersion { get; set; }
     }

@@ -257,7 +257,7 @@ namespace NadekoBot.Modules.Utility
         [RequireUserPermission(ChannelPermission.CreateInstantInvite)]
         public async Task CreateInvite()
         {
-            var invite = await ((ITextChannel)Context.Channel).CreateInviteAsync(0, null, isUnique: true);
+            var invite = await ((ITextChannel)Context.Channel).CreateInviteAsync(0, null);
 
             await Context.Channel.SendConfirmAsync($"{Context.User.Mention} https://discord.gg/{invite.Code}");
         }
@@ -268,10 +268,10 @@ namespace NadekoBot.Modules.Utility
             var stats = NadekoBot.Stats;
 
             await Context.Channel.EmbedAsync(
-                new EmbedBuilder().WithOkColor()
-                    .WithAuthor(eab => eab.WithName($"NadekoBot v{StatsService.BotVersion}")
+                new EmbedBuilder().WithOkColor() //WithColor(figureoutdiscordcolors)
+                    .WithAuthor(eab => eab.WithName($"GrinBot v{StatsService.BotVersion}")
                                           .WithUrl("http://nadekobot.readthedocs.io/en/latest/")
-                                          .WithIconUrl("https://cdn.discordapp.com/avatars/116275390695079945/b21045e778ef21c96d175400e779f0fb.jpg"))
+                                          .WithIconUrl("https://cdn.discordapp.com/icons/216760448739966977/2c5d323a2c769383a0c9cead72e3a0d2.jpg"))
                     .AddField(efb => efb.WithName(Format.Bold("Author")).WithValue(stats.Author).WithIsInline(true))
                     .AddField(efb => efb.WithName(Format.Bold("Library")).WithValue(stats.Library).WithIsInline(true))
                     .AddField(efb => efb.WithName(Format.Bold("Bot ID")).WithValue(NadekoBot.Client.CurrentUser().Id.ToString()).WithIsInline(true))

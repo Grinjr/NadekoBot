@@ -14,9 +14,9 @@ namespace NadekoBot.Services.Impl
         private ShardedDiscordClient client;
         private DateTime started;
 
-        public const string BotVersion = "1.1.0-beta";
+        public const string BotVersion = "1.1.0-beta grin-0.0.3";
 
-        public string Author => "Kwoth#2560 - Edited by Grinjr#???? owo";
+        public string Author => "Kwoth#2560 - Edited by Grinjr owo";
         public string Library => "Discord.Net";
         public int MessageCounter { get; private set; } = 0;
         public int CommandsRan { get; private set; } = 0;
