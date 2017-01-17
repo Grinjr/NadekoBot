@@ -6756,6 +6756,33 @@ namespace NadekoBot.Resources {
         }
         
         /// <summary>
+        ///    Looks up a localized string similar to shop.
+        /// </summary>
+        public static string shop_cmd {
+            get {
+                return ResourceManager.GetString("shop_cmd", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///    Looks up a localized string similar to Shop commands! [HEAVYWIP!].
+        /// </summary>
+        public static string shop_desc {
+            get {
+                return ResourceManager.GetString("shop_desc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///    Looks up a localized string similar to `{0}shop item`.
+        /// </summary>
+        public static string shop_usage {
+            get {
+                return ResourceManager.GetString("shop_usage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///    Looks up a localized string similar to shorten.
         /// </summary>
         public static string shorten_cmd {

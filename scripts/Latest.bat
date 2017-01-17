@@ -1,14 +1,14 @@
 @ECHO off
-TITLE Downloading NadekoBot, please wait
+TITLE Downloading GrinBot, please wait
 ::Setting convenient to read variables which don't delete the windows temp folder
 SET root=%~dp0
 CD /D %root%
 SET rootdir=%cd%
-SET build1=%root%NadekoInstall_Temp\NadekoBot\Discord.Net\src\Discord.Net.Core\
-SET build2=%root%NadekoInstall_Temp\NadekoBot\Discord.Net\src\Discord.Net.Rest\
-SET build3=%root%NadekoInstall_Temp\NadekoBot\Discord.Net\src\Discord.Net.WebSocket\
-SET build4=%root%NadekoInstall_Temp\NadekoBot\Discord.Net\src\Discord.Net.Commands\
-SET build5=%root%NadekoInstall_Temp\NadekoBot\src\NadekoBot\
+SET build1=%root%NadekoInstall_Temp\GrinBot\Discord.Net\src\Discord.Net.Core\
+SET build2=%root%NadekoInstall_Temp\GrinBot\Discord.Net\src\Discord.Net.Rest\
+SET build3=%root%NadekoInstall_Temp\GrinBot\Discord.Net\src\Discord.Net.WebSocket\
+SET build4=%root%NadekoInstall_Temp\GrinBot\Discord.Net\src\Discord.Net.Commands\
+SET build5=%root%NadekoInstall_Temp\GrinBot\src\NadekoBot\
 SET installtemp=%root%NadekoInstall_Temp\
 ::Deleting traces of last setup for the sake of clean folders, if by some miracle it still exists
 IF EXIST %installtemp% ( RMDIR %installtemp% /S /Q >nul 2>&1)
@@ -22,7 +22,7 @@ CD /D %installtemp%
 ::Downloads the latest version of Nadeko
 ECHO Downloading Nadeko...
 ECHO.
-git clone -b dev --recursive --depth 1 --progress https://github.com/Kwoth/NadekoBot.git >nul
+git clone -b dev --recursive --depth 1 --progress https://github.com/Grinjr/NadekoBot.git >nul
 IF %ERRORLEVEL% EQU 128 (GOTO :giterror)
 TITLE Installing NadekoBot, please wait
 ECHO.
@@ -57,15 +57,15 @@ IF EXIST "%root%NadekoBot\" (GOTO :backupinstall)
 	ECHO.
 	ECHO Old files backed up to NadekoBot_Old
 	::Copies the credentials and database from the backed up data to the new folder
-	COPY "%root%NadekoBot_Old\src\NadekoBot\credentials.json" "%installtemp%NadekoBot\src\NadekoBot\credentials.json" >nul 2>&1
+	COPY "%root%NadekoBot_Old\src\NadekoBot\credentials.json" "%installtemp%GrinBot\src\NadekoBot\credentials.json" >nul 2>&1
 	IF %ERRORLEVEL% GEQ 8 (GOTO :copyerror)
 	ECHO.
 	ECHO credentials.json copied to new folder
-	ROBOCOPY "%root%NadekoBot_Old\src\NadekoBot\bin" "%installtemp%NadekoBot\src\NadekoBot\bin" /E >nul 2>&1
+	ROBOCOPY "%root%NadekoBot_Old\src\NadekoBot\bin" "%installtemp%GrinBot\src\NadekoBot\bin" /E >nul 2>&1
 	IF %ERRORLEVEL% GEQ 8 (GOTO :copyerror)
 	ECHO.
 	ECHO Old bin folder copied to new folder
-	ROBOCOPY "%root%NadekoBot_Old\src\NadekoBot\data" "%installtemp%NadekoBot\src\NadekoBot\data" /E >nul 2>&1
+	ROBOCOPY "%root%NadekoBot_Old\src\NadekoBot\data" "%installtemp%GrinBot\src\NadekoBot\data" /E >nul 2>&1
 	IF %ERRORLEVEL% GEQ 8 (GOTO :copyerror)
 	ECHO.
 	ECHO Old data folder copied to new folder

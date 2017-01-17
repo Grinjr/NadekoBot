@@ -78,13 +78,29 @@ namespace NadekoBot.Modules.Games
                 await msg.Channel.TriggerTypingAsync().ConfigureAwait(false);
 
                 var response = await cleverbot.Value.Think(message).ConfigureAwait(false);
+                await Task.Delay(5000).ConfigureAwait(false);
                 try
                 {
-                    await msg.Channel.SendConfirmAsync(response.SanitizeMentions()).ConfigureAwait(false);
+                    await msg.Channel.SendMessageAsync(msg.Author.Mention + ' ' + response).ConfigureAwait(false);
                 }
                 catch
                 {
-                    await msg.Channel.SendConfirmAsync(response.SanitizeMentions()).ConfigureAwait(false); // try twice :\
+                    try
+                    {
+                        await msg.Channel.SendMessageAsync(msg.Author.Mention + ' ' + response).ConfigureAwait(false); // try twice :\
+                    }
+                    catch
+                    {
+                        try
+                        {
+                            await msg.Channel.SendMessageAsync(msg.Author.Mention + " I'm sorry, I didn't understand! Could you repeat that?").ConfigureAwait(false); // throw error
+                        }
+                        catch
+                        {
+
+                            await msg.Channel.SendMessageAsync("Error!").ConfigureAwait(false); // send a generic error if the error throws an error
+                        }
+                    }
                 }
                 return true;
             }

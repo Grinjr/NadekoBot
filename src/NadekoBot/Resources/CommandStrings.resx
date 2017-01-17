@@ -2889,4 +2889,13 @@
   <data name="pollstats_usage" xml:space="preserve">
     <value>`{0}pollstats`</value>
   </data>
+  <data name="shop_cmd" xml:space="preserve">
+    <value>shop</value>
+  </data>
+  <data name="shop_desc" xml:space="preserve">
+    <value>Shop commands! [HEAVYWIP!]</value>
+  </data>
+  <data name="shop_usage" xml:space="preserve">
+    <value>`{0}shop item`</value>
+  </data>
 </root>
