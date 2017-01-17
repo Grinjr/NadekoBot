@@ -8,7 +8,7 @@ CD /D %root%
 CLS
 ECHO Welcome to GrinBot Auto Restart and Update!
 ECHO --------------------------------------------
-ECHO 1.Update & Start Bot
+ECHO 1.Update ^& Start Bot
 ECHO 2.Start Bot
 ECHO 3.To exit
 ECHO.
