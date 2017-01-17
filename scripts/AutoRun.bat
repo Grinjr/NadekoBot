@@ -24,7 +24,7 @@ IF ERRORLEVEL 1 GOTO latestar
 ECHO Auto Restart and Update with Dev Build (latest)
 ECHO Bot will auto update on every restart!
 timeout /t 3
-CD /D %~dp0GrinBot\src\NadekoBot
+CD /D %~dp0NadekoBot\src\NadekoBot
 dotnet run --configuration Release
 ECHO Updating...
 timeout /t 3
@@ -56,7 +56,7 @@ GOTO stablear
 ECHO Normal Auto Restart
 ECHO Bot will not auto update on every restart!
 timeout /t 3
-CD /D %~dp0GrinBot\src\NadekoBot
+CD /D %~dp0NadekoBot\src\NadekoBot
 dotnet run --configuration Release
 goto autorun
 
