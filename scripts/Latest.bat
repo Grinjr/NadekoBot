@@ -49,8 +49,8 @@ IF EXIST "%root%NadekoBot\" (GOTO :backupinstall)
 :backupinstall
 	TITLE Backing up old files
 	ECHO.
-	ECHO 15 seconds to make sure to close any files such as NadekoBot.db before install!
-    timeout /t 15 >nul
+	ECHO 3 seconds to make sure to close any files such as NadekoBot.db before install!
+    timeout /t 3 >nul
 	::Recursively copies all files and folders from NadekoBot to NadekoBot_Old
 	ROBOCOPY "%root%NadekoBot" "%root%NadekoBot_Old" /MIR >nul 2>&1
 	IF %ERRORLEVEL% GEQ 8 (GOTO :copyerror)
@@ -111,6 +111,5 @@ IF EXIST "%root%NadekoBot\" (GOTO :backupinstall)
 	CD /D "%root%"
 	RMDIR /S /Q "%installtemp%" >nul 2>&1
 	ECHO.
-	ECHO Installation complete, 15 seconds until automatic startup!
-    timeout /t 15 >nul
+	ECHO Installation complete!
 	del Latest.bat
