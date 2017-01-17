@@ -13,7 +13,7 @@ ECHO 2.Start Bot
 ECHO 3.To exit
 ECHO.
 
-CHOICE /C 1234 /M "Enter your choice within 15 seconds, will default to 1:" /T 15 /D 1
+CHOICE /C 123 /M "Enter your choice within 15 seconds, will default to 1:" /T 15 /D 1
 
 :: Note - list ERRORLEVELS in decreasing order
 IF ERRORLEVEL 3 GOTO exit
