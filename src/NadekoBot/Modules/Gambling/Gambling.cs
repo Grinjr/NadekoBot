@@ -228,31 +228,100 @@ namespace NadekoBot.Modules.Gambling
             if (args[0] == "namecolor")
             {
                 long cost = 25;
-                if (args[1] == "custom") { cost = 100; }
+                bool custom = false;
 
+                // Test if argument is a hex value
+                int res;
+                if (System.Int32.TryParse(args[1].Replace("#", ""), System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out res))
+                {
+                    cost = 100;
+                    custom = true;
+                }
+
+                // Test if user has enough money
                 if (userCurrency < cost)
                 {
                     await Context.Channel.SendErrorAsync($"{Context.User.Mention} You don't have enough {Gambling.CurrencyPluralName}. You only have {userCurrency}{Gambling.CurrencySign} and need {cost}.\n\n{cost - userCurrency} more to go!").ConfigureAwait(false);
                     return;
                 }
 
-                // Red
-                if (args[1] == "red")
+                // Get Color Roles
+                IRole[] colorRoles = new IRole[11] 
                 {
+                    Context.Guild.Roles.Where(r => r.Name == "red").FirstOrDefault(),
+                    Context.Guild.Roles.Where(r => r.Name == "orange").FirstOrDefault(),
+                    Context.Guild.Roles.Where(r => r.Name == "yellow").FirstOrDefault(),
+                    Context.Guild.Roles.Where(r => r.Name == "brown").FirstOrDefault(),
+                    Context.Guild.Roles.Where(r => r.Name == "green").FirstOrDefault(),
+                    Context.Guild.Roles.Where(r => r.Name == "lime").FirstOrDefault(),
+                    Context.Guild.Roles.Where(r => r.Name == "pink").FirstOrDefault(),
+                    Context.Guild.Roles.Where(r => r.Name == "black").FirstOrDefault(),
+                    Context.Guild.Roles.Where(r => r.Name == "white").FirstOrDefault(),
+                    Context.Guild.Roles.Where(r => r.Name == "gold").FirstOrDefault(),
+                    Context.Guild.Roles.Where(r => r.Name == "silver").FirstOrDefault()
+                };
+
+                // Presets
+                if (colorRoles.Contains(Context.Guild.Roles.FirstOrDefault(r => r.Name == args[1])))
+                {
+                    // Clean up presets, in case there are any.
+                    foreach(IRole r in colorRoles)
+                    {
+                        if (user.GetRoles().Contains(r))
+                        {
+                            await user.RemoveRolesAsync(r).ConfigureAwait(false);
+                        }
+                    }
+                    // just double check... sometimes it misses one... >.>
+                    foreach (IRole r in colorRoles)
+                    {
+                        if (user.GetRoles().Contains(r))
+                        {
+                            await user.RemoveRolesAsync(r).ConfigureAwait(false);
+                        }
+                    }
+
+                    // Check if custom role already exists
+                    var roleCheck = Context.Guild.Roles.Where(r => r.Name == user.Mention).FirstOrDefault();
+                    if (roleCheck != null)
+                    {
+                        var colorRole = Context.Guild.Roles.Where(r => r.Name == user.Mention).FirstOrDefault();
+                        await colorRole.DeleteAsync().ConfigureAwait(true);
+                    }
+
+
+                    var role = Context.Guild.Roles.FirstOrDefault(r => r.Name == args[1]);
+                    await user.AddRolesAsync(role).ConfigureAwait(false);
+
                     await CurrencyHandler.RemoveCurrencyAsync(Context.User, "Bought Name Color", cost, false).ConfigureAwait(false);
-
-                    var colorRole = Context.Guild.Roles.FirstOrDefault(r => r.Name == "red");
-                    await user.AddRolesAsync(colorRole).ConfigureAwait(false);
-
-                    await Context.Channel.SendConfirmAsync($"You now have the {args[1]} name color!\n\n{cost}{Gambling.CurrencySign} has been deducted from your account. Please come again!").ConfigureAwait(false);
+                    await Context.Channel.EmbedAsync(
+                        new EmbedBuilder().WithColor(role.Color)
+                            .AddField(efb => efb.WithName($"You now have a {args[1]} name color!").WithValue($"{cost}{Gambling.CurrencySign} has been deducted from your account. Please come again!").WithIsInline(true)));
                 }
 
 
                 // Custom Name Color (EXTRA $$$)
-                if (args[1] == "custom")
+                if (custom == true)
                 {
                     if (string.IsNullOrWhiteSpace(user.Mention))
                         return;
+
+                    // Clean up presets, in case there are any.
+                    foreach (IRole r in colorRoles)
+                    {
+                        if (user.GetRoles().Contains(r))
+                        {
+                            await user.RemoveRolesAsync(r);
+                        }
+                    }
+                    // just double check... sometimes it misses one... >.>
+                    foreach (IRole r in colorRoles)
+                    {
+                        if (user.GetRoles().Contains(r))
+                        {
+                            await user.RemoveRolesAsync(r).ConfigureAwait(false);
+                        }
+                    }
 
                     // Check if custom role already exists
                     var roleCheck = Context.Guild.Roles.Where(r => r.Name == user.Mention).FirstOrDefault();
@@ -262,16 +331,8 @@ namespace NadekoBot.Modules.Gambling
                         await role.DeleteAsync().ConfigureAwait(true);
                     }
 
-                    // Test if valid hex color
-                    int res;
-                    if (!System.Int32.TryParse(args[2].Replace("#", ""), System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out res))
-                    {
-                        await Context.Channel.SendErrorAsync("🚫 Your color was not provided in the proper format! Make sure that the color you provide is a valid hexadecimal value.").ConfigureAwait(false);
-                        return;
-                    }
-
                     // Turn color arg into actual color
-                    var color = new ImageSharp.Color(args[2].Replace("#", ""));
+                    var color = new ImageSharp.Color(args[1].Replace("#", ""));
 
                     // Get staff role colors for later color checking
                     try
@@ -322,10 +383,10 @@ namespace NadekoBot.Modules.Gambling
                         img.BackgroundColor(color);
 
                         //await Context.Channel.SendConfirmAsync($"You now have a custom name color with the color value of {color}!\n\n{cost}{Gambling.CurrencySign} has been deducted from your account. Please come again!").ConfigureAwait(false);
-                        //await Context.Channel.SendFileAsync(img.ToStream(), $"{args[2].Replace("#", "")}.png", $"You now have a custom name color with the color value of {args[2]}!\n\n{cost}{Gambling.CurrencySign} has been deducted from your account. Please come again!");
+                        //await Context.Channel.SendFileAsync(img.ToStream(), $"{args[1].Replace("#", "")}.png", $"You now have a custom name color with the color value of {args[1]}!\n\n{cost}{Gambling.CurrencySign} has been deducted from your account. Please come again!");
                         await Context.Channel.EmbedAsync(
                             new EmbedBuilder().WithColor(role.Color)
-                                .AddField(efb => efb.WithName($"You now have a custom name color with the color value of {args[2]}").WithValue($"{cost}{Gambling.CurrencySign} has been deducted from your account. Please come again!").WithIsInline(true)));
+                                .AddField(efb => efb.WithName($"You now have a custom name color with the color value of #{color.ToHex().Substring(0, color.ToHex().Length-2)}!").WithValue($"{cost}{Gambling.CurrencySign} has been deducted from your account. Please come again!").WithIsInline(true)));
                     }
                     catch
                     {
@@ -333,17 +394,6 @@ namespace NadekoBot.Modules.Gambling
                         await role.DeleteAsync().ConfigureAwait(false);
 
                         await Context.Channel.SendErrorAsync("⚠️ Unspecified error.").ConfigureAwait(false);
-                    }
-
-                    // Clean up presets, in case there are any.
-                    try
-                    {
-                        // red
-                        await user.RemoveRolesAsync(Context.Guild.Roles.Where(r => r.Name == "red").FirstOrDefault());
-                    }
-                    catch
-                    {
-                        await Context.Channel.SendErrorAsync("⚠️ Error while cleaning up presets.").ConfigureAwait(false);
                     }
                 }
 
