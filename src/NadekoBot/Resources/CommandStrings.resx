@@ -2898,4 +2898,13 @@
   <data name="shop_usage" xml:space="preserve">
     <value>`{0}shop item`</value>
   </data>
+  <data name="testdate_cmd" xml:space="preserve">
+    <value>testdate</value>
+  </data>
+  <data name="testdate_desc" xml:space="preserve">
+    <value>test</value>
+  </data>
+  <data name="testdate_usage" xml:space="preserve">
+    <value>test</value>
+  </data>
 </root>

@@ -7296,6 +7296,33 @@ namespace NadekoBot.Resources {
         }
         
         /// <summary>
+        ///    Looks up a localized string similar to testdate.
+        /// </summary>
+        public static string testdate_cmd {
+            get {
+                return ResourceManager.GetString("testdate_cmd", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///    Looks up a localized string similar to test.
+        /// </summary>
+        public static string testdate_desc {
+            get {
+                return ResourceManager.GetString("testdate_desc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///    Looks up a localized string similar to test.
+        /// </summary>
+        public static string testdate_usage {
+            get {
+                return ResourceManager.GetString("testdate_usage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///    Looks up a localized string similar to tl.
         /// </summary>
         public static string tl_cmd {

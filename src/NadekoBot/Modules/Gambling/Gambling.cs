@@ -9,6 +9,8 @@ using NadekoBot.Services;
 using NadekoBot.Services.Database.Models;
 using System.Collections.Generic;
 using ImageSharp;
+using System.IO;
+using System.Threading;
 
 namespace NadekoBot.Modules.Gambling
 {
@@ -19,6 +21,8 @@ namespace NadekoBot.Modules.Gambling
         public static string CurrencyPluralName { get; set; }
         public static string CurrencySign { get; set; }
 
+        public static string coloredNamesFile = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "ColoredNames.txt");
+
         static Gambling()
         {
             using (var uow = DbHandler.UnitOfWork())
@@ -28,6 +32,67 @@ namespace NadekoBot.Modules.Gambling
                 CurrencyName = conf.CurrencyName;
                 CurrencySign = conf.CurrencySign;
                 CurrencyPluralName = conf.CurrencyPluralName;
+            }
+
+            var nameColorTimer = new Timer(async (e) =>
+            {
+                await CheckForExpiredColors();
+            }, null, 0, System.Convert.ToInt32(System.TimeSpan.FromMinutes(1).TotalMilliseconds));
+        }
+
+        public static async Task CheckForExpiredColors()
+        {
+            while (true)
+            {
+                if (System.IO.File.Exists(coloredNamesFile))
+                {
+                    int i = 0;
+                    List<string> lines = File.ReadLines(coloredNamesFile).ToList();
+                    lines = lines.Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().ToList();
+                    List<int> linesToRemove = new List<int>();
+                    foreach (string line in lines)
+                    {
+                        if (line == null)
+                        {
+                            return;
+                        }
+
+                        System.String[] substrings = line.Split(',');
+                        string userId = substrings[0];
+                        System.DateTime expireDate = System.Convert.ToDateTime(substrings[1]);
+                        if (expireDate < System.DateTime.Now)
+                        {
+                            try
+                            {
+                                IGuild guild = NadekoBot.Client.GetGuilds().First();
+                                IGuildUser user = NadekoBot.Client.GetGuilds().First().GetUser(System.Convert.ToUInt64(userId));
+                                if (user != null)
+                                {
+                                    await user.SendMessageAsync("Whoops! Looks like your colored name has just **expired**! Sorry about that! You can renew your colored name by buying it again at any time in the shop. (e.g. $shop namecolor red, or $shop namecolor #ff0000)");
+                                    await clearColors(guild, user);
+                                }
+
+                                linesToRemove.Add(i);
+                            }
+                            catch (System.Exception e)
+                            {
+                                System.Console.WriteLine("Something went wrong in CheckForExpiredColors method.\n\nError:\n" + e);
+                            }
+                        }
+                        i++;
+                    }
+                    if (linesToRemove.Count > 0)
+                    {
+                        int x = 0;
+                        foreach (int lineNumber in linesToRemove)
+                        {
+                            lines.RemoveAt(lineNumber - x);
+                            x++;
+                        }
+                        File.WriteAllLines(coloredNamesFile, lines);
+                    }
+                }
+                await Task.Delay(System.DateTime.Now.AddMinutes(1).Millisecond);
             }
         }
 
@@ -206,6 +271,54 @@ namespace NadekoBot.Modules.Gambling
 
         [NadekoCommand, Usage, Description, Aliases]
         [RequireContext(ContextType.Guild)]
+        [OwnerOnly]
+        public async Task TestDate()
+        {
+            if (!System.IO.File.Exists(coloredNamesFile))
+            {
+                System.IO.File.WriteAllText(coloredNamesFile, "");
+            }
+            IEnumerable<System.String> lines = System.IO.File.ReadLines(coloredNamesFile);
+
+            string message = "";
+            int i = 0;
+            bool userExists = false;
+            foreach (string line in lines)
+            {
+                System.String[] substrings = line.Split(',');
+                string userId = substrings[0];
+                System.DateTime expireDate = System.Convert.ToDateTime(substrings[1]);
+
+                if (i > 0)
+                {
+                    message += "\n";
+                }
+                message += "User ID " + userId + "'s color will expire on: " + expireDate;
+
+                //IGuildUser user = await Context.Guild.GetUserAsync(System.Convert.ToUInt64(userId));
+                //message += "User " + user.Mention + "'s color will expire on: " + expireDate;
+
+                i++;
+                if (Context.User.Id.ToString() == userId) { userExists = true; }
+            }
+
+            if (!userExists)
+            {
+                if (i > 0)
+                {
+                    System.IO.File.AppendAllText(coloredNamesFile, System.Environment.NewLine);
+                    message += "\n";
+                }
+                System.IO.File.AppendAllText(coloredNamesFile, Context.User.Id.ToString() + "," + System.DateTime.Now.AddMonths(1).ToString());
+                message += "User ID " + Context.User.Id.ToString() + "'s color will expire on: " + System.DateTime.Now.AddMonths(1).ToString();
+            }
+            i = 0;
+
+            await Context.Channel.SendConfirmAsync(message).ConfigureAwait(false);
+        }
+
+        [NadekoCommand, Usage, Description, Aliases]
+        [RequireContext(ContextType.Guild)]
         public async Task Shop(params string[] args) //string item, string shopparams, [Remainder] string extraparams = null
         {
             if (args.Count() == 0)
@@ -227,14 +340,14 @@ namespace NadekoBot.Modules.Gambling
             // Name Color Shop Item
             if (args[0] == "namecolor")
             {
-                long cost = 25;
+                long cost = 30;
                 bool custom = false;
 
                 // Test if argument is a hex value
                 int res;
                 if (System.Int32.TryParse(args[1].Replace("#", ""), System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out res))
                 {
-                    cost = 100;
+                    cost = 60;
                     custom = true;
                 }
 
@@ -246,7 +359,7 @@ namespace NadekoBot.Modules.Gambling
                 }
 
                 // Get Color Roles
-                IRole[] colorRoles = new IRole[11] 
+                IRole[] colorRoles = new IRole[11]
                 {
                     Context.Guild.Roles.Where(r => r.Name == "red").FirstOrDefault(),
                     Context.Guild.Roles.Where(r => r.Name == "orange").FirstOrDefault(),
@@ -264,36 +377,14 @@ namespace NadekoBot.Modules.Gambling
                 // Presets
                 if (colorRoles.Contains(Context.Guild.Roles.FirstOrDefault(r => r.Name == args[1])))
                 {
-                    // Clean up presets, in case there are any.
-                    foreach(IRole r in colorRoles)
-                    {
-                        if (user.GetRoles().Contains(r))
-                        {
-                            await user.RemoveRolesAsync(r).ConfigureAwait(false);
-                        }
-                    }
-                    // just double check... sometimes it misses one... >.>
-                    foreach (IRole r in colorRoles)
-                    {
-                        if (user.GetRoles().Contains(r))
-                        {
-                            await user.RemoveRolesAsync(r).ConfigureAwait(false);
-                        }
-                    }
 
-                    // Check if custom role already exists
-                    var roleCheck = Context.Guild.Roles.Where(r => r.Name == user.Mention).FirstOrDefault();
-                    if (roleCheck != null)
-                    {
-                        var colorRole = Context.Guild.Roles.Where(r => r.Name == user.Mention).FirstOrDefault();
-                        await colorRole.DeleteAsync().ConfigureAwait(true);
-                    }
-
+                    await clearColors(Context.Guild, user);
 
                     var role = Context.Guild.Roles.FirstOrDefault(r => r.Name == args[1]);
                     await user.AddRolesAsync(role).ConfigureAwait(false);
 
                     await CurrencyHandler.RemoveCurrencyAsync(Context.User, "Bought Name Color", cost, false).ConfigureAwait(false);
+
                     await Context.Channel.EmbedAsync(
                         new EmbedBuilder().WithColor(role.Color)
                             .AddField(efb => efb.WithName($"You now have a {args[1]} name color!").WithValue($"{cost}{Gambling.CurrencySign} has been deducted from your account. Please come again!").WithIsInline(true)));
@@ -306,30 +397,7 @@ namespace NadekoBot.Modules.Gambling
                     if (string.IsNullOrWhiteSpace(user.Mention))
                         return;
 
-                    // Clean up presets, in case there are any.
-                    foreach (IRole r in colorRoles)
-                    {
-                        if (user.GetRoles().Contains(r))
-                        {
-                            await user.RemoveRolesAsync(r);
-                        }
-                    }
-                    // just double check... sometimes it misses one... >.>
-                    foreach (IRole r in colorRoles)
-                    {
-                        if (user.GetRoles().Contains(r))
-                        {
-                            await user.RemoveRolesAsync(r).ConfigureAwait(false);
-                        }
-                    }
-
-                    // Check if custom role already exists
-                    var roleCheck = Context.Guild.Roles.Where(r => r.Name == user.Mention).FirstOrDefault();
-                    if (roleCheck != null)
-                    {
-                        var role = Context.Guild.Roles.Where(r => r.Name == user.Mention).FirstOrDefault();
-                        await role.DeleteAsync().ConfigureAwait(true);
-                    }
+                    await clearColors(Context.Guild, user);
 
                     // Turn color arg into actual color
                     var color = new ImageSharp.Color(args[1].Replace("#", ""));
@@ -386,7 +454,7 @@ namespace NadekoBot.Modules.Gambling
                         //await Context.Channel.SendFileAsync(img.ToStream(), $"{args[1].Replace("#", "")}.png", $"You now have a custom name color with the color value of {args[1]}!\n\n{cost}{Gambling.CurrencySign} has been deducted from your account. Please come again!");
                         await Context.Channel.EmbedAsync(
                             new EmbedBuilder().WithColor(role.Color)
-                                .AddField(efb => efb.WithName($"You now have a custom name color with the color value of #{color.ToHex().Substring(0, color.ToHex().Length-2)}!").WithValue($"{cost}{Gambling.CurrencySign} has been deducted from your account. Please come again!").WithIsInline(true)));
+                                .AddField(efb => efb.WithName($"You now have a custom name color with the color value of #{color.ToHex().Substring(0, color.ToHex().Length - 2)}!").WithValue($"{cost}{Gambling.CurrencySign} has been deducted from your account. Please come again!").WithIsInline(true)));
                     }
                     catch
                     {
@@ -397,6 +465,91 @@ namespace NadekoBot.Modules.Gambling
                     }
                 }
 
+                // Set Colored Name Expiration Date
+                if (!System.IO.File.Exists(coloredNamesFile))
+                {
+                    System.IO.File.WriteAllText(coloredNamesFile, "");
+                }
+
+                List<string> lines = File.ReadLines(coloredNamesFile).ToList();
+                List<int> linesToRemove = new List<int>();
+
+                int i = 0;
+                foreach (string line in lines)
+                {
+                    System.String[] substrings = line.Split(',');
+                    string userId = substrings[0];
+
+                    if (Context.User.Id.ToString() == userId)
+                    {
+                        linesToRemove.Add(i);
+                    }
+
+                    i++;
+                }
+
+
+                int x = 0;
+                if (linesToRemove != null)
+                {
+                    foreach (int lineNumber in linesToRemove)
+                    {
+                        lines.RemoveAt(lineNumber - x);
+                        x++;
+                    }
+                    File.WriteAllLines(coloredNamesFile, lines);
+                }
+                if ((x - i) > 0)
+                {
+                    System.IO.File.AppendAllText(coloredNamesFile, System.Environment.NewLine);
+                }
+                System.IO.File.AppendAllText(coloredNamesFile, Context.User.Id.ToString() + "," + System.DateTime.Now.AddMonths(1).ToString());
+            }
+        }
+
+        public static async Task clearColors(IGuild guild, IGuildUser user)
+        {
+            // Get user's roles
+            IRole[] userRoles = user.GetRoles().ToArray();
+
+            // Get color roles
+            IRole[] colorRoles = new IRole[11]
+            {
+                    guild.Roles.Where(r => r.Name == "red").FirstOrDefault(),
+                    guild.Roles.Where(r => r.Name == "orange").FirstOrDefault(),
+                    guild.Roles.Where(r => r.Name == "yellow").FirstOrDefault(),
+                    guild.Roles.Where(r => r.Name == "brown").FirstOrDefault(),
+                    guild.Roles.Where(r => r.Name == "green").FirstOrDefault(),
+                    guild.Roles.Where(r => r.Name == "lime").FirstOrDefault(),
+                    guild.Roles.Where(r => r.Name == "pink").FirstOrDefault(),
+                    guild.Roles.Where(r => r.Name == "black").FirstOrDefault(),
+                    guild.Roles.Where(r => r.Name == "white").FirstOrDefault(),
+                    guild.Roles.Where(r => r.Name == "gold").FirstOrDefault(),
+                    guild.Roles.Where(r => r.Name == "silver").FirstOrDefault()
+            };
+            // Clean up presets, in case there are any.
+            foreach (IRole r in colorRoles)
+            {
+                if (user.GetRoles().Contains(r))
+                {
+                    await user.RemoveRolesAsync(r).ConfigureAwait(false);
+                }
+            }
+            // just double check... sometimes it misses one... >.>
+            foreach (IRole r in colorRoles)
+            {
+                if (user.GetRoles().Contains(r))
+                {
+                    await user.RemoveRolesAsync(r).ConfigureAwait(false);
+                }
+            }
+
+            // Check if custom role exists
+            var roleCheck = guild.Roles.Where(r => r.Name == user.Mention).FirstOrDefault();
+            if (roleCheck != null)
+            {
+                var colorRole = guild.Roles.Where(r => r.Name == user.Mention).FirstOrDefault();
+                await colorRole.DeleteAsync().ConfigureAwait(true);
             }
         }
 
