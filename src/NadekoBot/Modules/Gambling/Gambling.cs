@@ -37,7 +37,7 @@ namespace NadekoBot.Modules.Gambling
             var nameColorTimer = new Timer(async (e) =>
             {
                 await CheckForExpiredColors();
-            }, null, 0, System.Convert.ToInt32(System.TimeSpan.FromMinutes(1).TotalMilliseconds));
+            }, null, 0, System.Convert.ToInt32(System.TimeSpan.FromHours(12).TotalMilliseconds));
         }
 
         public static async Task CheckForExpiredColors()
@@ -92,7 +92,7 @@ namespace NadekoBot.Modules.Gambling
                         File.WriteAllLines(coloredNamesFile, lines);
                     }
                 }
-                await Task.Delay(System.DateTime.Now.AddMinutes(1).Millisecond);
+                await Task.Delay(System.DateTime.Now.AddHours(12).Millisecond);
             }
         }
 
