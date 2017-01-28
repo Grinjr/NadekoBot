@@ -609,7 +609,7 @@ namespace NadekoBot.Modules.Gambling
             var richest = new List<Currency>();
             using (var uow = DbHandler.UnitOfWork())
             {
-                richest = uow.Currency.GetTopRichest(9).ToList();
+                richest = uow.Currency.GetTopRichest(10).ToList();
             }
             if (!richest.Any())
                 return;
@@ -629,7 +629,7 @@ namespace NadekoBot.Modules.Gambling
                 else
                     usrStr = usr.Username?.TrimTo(20, true);
 
-                embed.AddField(efb => efb.WithName("#" + (i + 1) + " " + usrStr).WithValue(x.Amount.ToString() + " " + NadekoBot.BotConfig.CurrencySign).WithIsInline(true));
+                embed.AddField(efb => efb.WithName("#" + (i + 1) + " " + usrStr).WithValue(x.Amount.ToString() + " " + NadekoBot.BotConfig.CurrencySign).WithIsInline(false));
             }
 
             await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
