@@ -45,14 +45,14 @@ namespace NadekoBot.Modules.Games.Commands.Hangman
             HangmanObject[] termTypes;
             data.TryGetValue(type, out termTypes);
 
-            if (termTypes.Length == 0)
+            if (termTypes == null || termTypes.Length == 0)
                 return null;
 
             return termTypes[rng.Next(0, termTypes.Length)];
         }
     }
 
-    public class HangmanGame
+    public class HangmanGame: IDisposable
     {
         private readonly Logger _log;
 
@@ -114,7 +114,7 @@ namespace NadekoBot.Modules.Games.Commands.Hangman
                 await GameChannel.EmbedAsync(embed.WithOkColor()).ConfigureAwait(false);
         }
 
-        private async void PotentialGuess(SocketMessage msg)
+        private async Task PotentialGuess(SocketMessage msg)
         {
             try
             {
@@ -189,12 +189,18 @@ namespace NadekoBot.Modules.Games.Commands.Hangman
             catch (Exception ex) { _log.Warn(ex); }
         }
 
-        public string GetHangman() => $@"\_\_\_\_\_\_\_\_\_
-      |           |
-      |           |
-   {(Errors > 0 ? "😲" : "      ")}        |
-   {(Errors > 1 ? "/" : "  ")} {(Errors > 2 ? "|" : "  ")} {(Errors > 3 ? "\\" : "  ")}       | 
-    {(Errors > 4 ? "/" : "  ")} {(Errors > 5 ? "\\" : "  ")}        |
-               /-\";
+        public string GetHangman() => $@". ┌─────┐
+.┃...............┋
+.┃...............┋
+.┃{(Errors > 0 ? ".............😲" : "")}
+.┃{(Errors > 1 ? "............./" : "")} {(Errors > 2 ? "|" : "")} {(Errors > 3 ? "\\" : "")}
+.┃{(Errors > 4 ? "............../" : "")} {(Errors > 5 ? "\\" : "")}
+/-\";
+
+        public void Dispose()
+        {
+            NadekoBot.Client.MessageReceived -= PotentialGuess;
+            OnEnded = null;
+        }
     }
 }
