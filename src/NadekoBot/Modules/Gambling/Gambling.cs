@@ -609,7 +609,7 @@ namespace NadekoBot.Modules.Gambling
             var richest = new List<Currency>();
             using (var uow = DbHandler.UnitOfWork())
             {
-                richest = uow.Currency.GetTopRichest(10).ToList();
+                richest = uow.Currency.GetTopRichest(5).ToList();
             }
             if (!richest.Any())
                 return;
