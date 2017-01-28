@@ -2889,6 +2889,25 @@
   <data name="pollstats_usage" xml:space="preserve">
     <value>`{0}pollstats`</value>
   </data>
+<<<<<<< HEAD
+  <data name="shop_cmd" xml:space="preserve">
+    <value>shop</value>
+  </data>
+  <data name="shop_desc" xml:space="preserve">
+    <value>Shop commands! [HEAVYWIP!]</value>
+  </data>
+  <data name="shop_usage" xml:space="preserve">
+    <value>`{0}shop item`</value>
+  </data>
+  <data name="testdate_cmd" xml:space="preserve">
+    <value>testdate</value>
+  </data>
+  <data name="testdate_desc" xml:space="preserve">
+    <value>test</value>
+  </data>
+  <data name="testdate_usage" xml:space="preserve">
+    <value>test</value>
+=======
   <data name="repeatlist_cmd" xml:space="preserve">
     <value>repeatlist replst</value>
   </data>
@@ -2971,7 +2990,7 @@
     <value>`{0}slottest 1000`</value>
   </data>
   <data name="slot_cmd" xml:space="preserve">
-    <value>slot slots</value>
+    <value>slot</value>
   </data>
   <data name="slot_desc" xml:space="preserve">
     <value>Play Nadeko slots. Max bet is 999. 3 seconds cooldown per user.</value>
@@ -3032,23 +3051,6 @@
   </data>
   <data name="mal_usage" xml:space="preserve">
     <value>`{0}mal straysocks`</value>
-  </data>
-  <data name="shop_cmd" xml:space="preserve">
-    <value>shop</value>
-  </data>
-  <data name="shop_desc" xml:space="preserve">
-    <value>Shop commands! [HEAVYWIP!]</value>
-  </data>
-  <data name="shop_usage" xml:space="preserve">
-    <value>`{0}shop item`</value>
-  </data>
-  <data name="testdate_cmd" xml:space="preserve">
-    <value>testdate</value>
-  </data>
-  <data name="testdate_desc" xml:space="preserve">
-    <value>test</value>
-  </data>
-  <data name="testdate_usage" xml:space="preserve">
-    <value>test</value>
+>>>>>>> refs/remotes/Kwoth/dev
   </data>
 </root>

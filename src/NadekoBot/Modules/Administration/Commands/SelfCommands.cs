@@ -20,8 +20,8 @@ namespace NadekoBot.Modules.Administration
             public async Task Leave([Remainder] string guildStr)
             {
                 guildStr = guildStr.Trim().ToUpperInvariant();
-                var server = NadekoBot.Client.GetGuilds().FirstOrDefault(g => g.Id.ToString() == guildStr) ??
-                    NadekoBot.Client.GetGuilds().FirstOrDefault(g => g.Name.Trim().ToUpperInvariant() == guildStr);
+                var server = NadekoBot.Client.Guilds.FirstOrDefault(g => g.Id.ToString() == guildStr) ??
+                    NadekoBot.Client.Guilds.FirstOrDefault(g => g.Name.Trim().ToUpperInvariant() == guildStr);
 
                 if (server == null)
                 {
@@ -124,7 +124,7 @@ namespace NadekoBot.Modules.Administration
                 if (ids.Length != 2)
                     return;
                 var sid = ulong.Parse(ids[0]);
-                var server = NadekoBot.Client.GetGuilds().Where(s => s.Id == sid).FirstOrDefault();
+                var server = NadekoBot.Client.Guilds.Where(s => s.Id == sid).FirstOrDefault();
 
                 if (server == null)
                     return;
@@ -159,7 +159,7 @@ namespace NadekoBot.Modules.Administration
             [OwnerOnly]
             public async Task Announce([Remainder] string message)
             {
-                var channels = await Task.WhenAll(NadekoBot.Client.GetGuilds().Select(g =>
+                var channels = await Task.WhenAll(NadekoBot.Client.Guilds.Select(g =>
                     g.GetDefaultChannelAsync()
                 )).ConfigureAwait(false);
                 if (channels == null)

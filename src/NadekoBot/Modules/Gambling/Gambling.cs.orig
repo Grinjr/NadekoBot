@@ -25,9 +25,15 @@ namespace NadekoBot.Modules.Gambling
 
         static Gambling()
         {
-            CurrencyName = NadekoBot.BotConfig.CurrencyName;
-            CurrencyPluralName = NadekoBot.BotConfig.CurrencyPluralName;
-            CurrencySign = NadekoBot.BotConfig.CurrencySign;
+<<<<<<< HEAD
+            using (var uow = DbHandler.UnitOfWork())
+            {
+                var conf = uow.BotConfig.GetOrCreate();
+
+                CurrencyName = conf.CurrencyName;
+                CurrencySign = conf.CurrencySign;
+                CurrencyPluralName = conf.CurrencyPluralName;
+            }
 
             var nameColorTimer = new Timer(async (e) =>
             {
@@ -59,8 +65,8 @@ namespace NadekoBot.Modules.Gambling
                         {
                             try
                             {
-                                IGuild guild = NadekoBot.Client.Guilds.First();
-                                IGuildUser user = NadekoBot.Client.Guilds.First().GetUser(System.Convert.ToUInt64(userId));
+                                IGuild guild = NadekoBot.Client.GetGuilds().First();
+                                IGuildUser user = NadekoBot.Client.GetGuilds().First().GetUser(System.Convert.ToUInt64(userId));
                                 if (user != null)
                                 {
                                     await user.SendMessageAsync("Whoops! Looks like your colored name has just **expired**! Sorry about that! You can renew your colored name by buying it again at any time in the shop. (e.g. $shop namecolor red, or $shop namecolor #ff0000)");
@@ -89,6 +95,11 @@ namespace NadekoBot.Modules.Gambling
                 }
                 await Task.Delay(System.DateTime.Now.AddHours(12).Millisecond);
             }
+=======
+            CurrencyName = NadekoBot.BotConfig.CurrencyName;
+            CurrencyPluralName = NadekoBot.BotConfig.CurrencyPluralName;
+            CurrencySign = NadekoBot.BotConfig.CurrencySign;
+>>>>>>> refs/remotes/Kwoth/dev
         }
 
         public static long GetCurrency(ulong id)

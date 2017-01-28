@@ -63,7 +63,7 @@ namespace NadekoBot.Services
         }
         public async Task StartHandling()
         {
-            ownerChannels = (await Task.WhenAll(_client.GetGuilds().SelectMany(g => g.Users)
+            ownerChannels = (await Task.WhenAll(_client.Guilds.SelectMany(g => g.Users)
                                   .Where(u => NadekoBot.Credentials.OwnerIds.Contains(u.Id))
                                   .Distinct(new IGuildUserComparer())
                                   .Select(async u => { try { return await u.CreateDMChannelAsync(); } catch { return null; } })))

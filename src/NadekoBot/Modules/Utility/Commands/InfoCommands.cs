@@ -24,7 +24,7 @@ namespace NadekoBot.Modules.Utility
                 if (string.IsNullOrWhiteSpace(guildName))
                     guild = channel.Guild;
                 else
-                    guild = NadekoBot.Client.GetGuilds().Where(g => g.Name.ToUpperInvariant() == guildName.ToUpperInvariant()).FirstOrDefault();
+                    guild = NadekoBot.Client.Guilds.Where(g => g.Name.ToUpperInvariant() == guildName.ToUpperInvariant()).FirstOrDefault();
                 if (guild == null)
                     return;
                 var ownername = await guild.GetUserAsync(guild.OwnerId);

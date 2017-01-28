@@ -7161,7 +7161,7 @@ namespace NadekoBot.Resources {
         }
         
         /// <summary>
-        ///    Looks up a localized string similar to slot.
+        ///    Looks up a localized string similar to slot slots.
         /// </summary>
         public static string slot_cmd {
             get {

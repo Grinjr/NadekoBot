@@ -287,7 +287,7 @@ namespace NadekoBot.Modules.Gambling
                                 msg = "WOAAHHHHHH!!! Congratulations!!! x30";
                         }
 
-                        await Context.Channel.SendFileAsync(bgImage.ToStream(), "result.png", Context.User.Mention + " " + msg + $"\n`Bet:`{amount} `Won:` {amount * result.Multiplier}{NadekoBot.BotConfig.CurrencySign}").ConfigureAwait(false);
+                        await Context.Channel.SendFileAsync(bgImage.ToStream(), "result.png", Context.User.Mention + " " + msg /*+ $"\n`Bet:`{amount} `Won:` {amount * result.Multiplier}{NadekoBot.BotConfig.CurrencySign}"*/).ConfigureAwait(false);
                     }
                 }
                 finally

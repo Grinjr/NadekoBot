@@ -15,7 +15,11 @@ namespace NadekoBot.Services.Impl
         private DiscordShardedClient client;
         private DateTime started;
 
-        public const string BotVersion = "1.1.4-beta grin-0.0.7";
+<<<<<<< HEAD
+        public const string BotVersion = "1.1.0-beta grin-0.0.6";
+=======
+        public const string BotVersion = "1.1.4";
+>>>>>>> refs/remotes/Kwoth/dev
 
         public string Author => "Kwoth#2560 - Edited by Grinjr owo";
         public string Library => "Discord.Net";
@@ -90,7 +94,7 @@ namespace NadekoBot.Services.Impl
                     {
                         using (var content = new FormUrlEncodedContent(
                             new Dictionary<string, string> {
-                                { "servercount", this.client.Guilds.Count.ToString() },
+                                { "servercount", this.client.GetGuildCount().ToString() },
                                 { "key", NadekoBot.Credentials.CarbonKey }}))
                         {
                             content.Headers.Clear();
@@ -106,7 +110,7 @@ namespace NadekoBot.Services.Impl
 
         public void Initialize()
         {
-            var guilds = this.client.Guilds;
+            var guilds = this.client.GetGuilds();
             _textChannels = guilds.Sum(g => g.Channels.Where(cx => cx is ITextChannel).Count());
             _voiceChannels = guilds.Sum(g => g.Channels.Count) - _textChannels;
         }
@@ -120,7 +124,7 @@ Bot Version: [{BotVersion}]
 Bot ID: {curUser.Id}
 Owner ID(s): {string.Join(", ", NadekoBot.Credentials.OwnerIds)}
 Uptime: {GetUptimeString()}
-Servers: {client.Guilds.Count} | TextChannels: {TextChannels} | VoiceChannels: {VoiceChannels}
+Servers: {client.GetGuildCount()} | TextChannels: {TextChannels} | VoiceChannels: {VoiceChannels}
 Commands Ran this session: {CommandsRan}
 Messages: {MessageCounter} [{MessagesPerSecond:F2}/sec] Heap: [{Heap} MB]");
         }

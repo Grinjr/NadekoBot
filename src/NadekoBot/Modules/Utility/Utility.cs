@@ -287,7 +287,7 @@ namespace NadekoBot.Modules.Utility
                     .AddField(efb => efb.WithName(Format.Bold("Memory")).WithValue($"{stats.Heap} MB").WithIsInline(true))
                     .AddField(efb => efb.WithName(Format.Bold("Owner ID(s)")).WithValue(string.Join("\n", NadekoBot.Credentials.OwnerIds)).WithIsInline(true))
                     .AddField(efb => efb.WithName(Format.Bold("Uptime")).WithValue(stats.GetUptimeString("\n")).WithIsInline(true))
-                    .AddField(efb => efb.WithName(Format.Bold("Presence")).WithValue($"{NadekoBot.Client.GetGuildCount()} Servers\n{stats.TextChannels} Text Channels\n{stats.VoiceChannels} Voice Channels").WithIsInline(true))
+                    .AddField(efb => efb.WithName(Format.Bold("Presence")).WithValue($"{NadekoBot.Client.Guilds.Count} Servers\n{stats.TextChannels} Text Channels\n{stats.VoiceChannels} Voice Channels").WithIsInline(true))
 #if !GLOBAL_NADEKO
                     .WithFooter(efb => efb.WithText($"Playing {Music.Music.MusicPlayers.Where(mp => mp.Value.CurrentSong != null).Count()} songs, {Music.Music.MusicPlayers.Sum(mp => mp.Value.Playlist.Count)} queued."))
 #endif
@@ -316,7 +316,7 @@ namespace NadekoBot.Modules.Utility
             if (page < 0)
                 return;
 
-            var guilds = await Task.Run(() => NadekoBot.Client.GetGuilds().OrderBy(g => g.Name).Skip((page - 1) * 15).Take(15)).ConfigureAwait(false);
+            var guilds = await Task.Run(() => NadekoBot.Client.Guilds.OrderBy(g => g.Name).Skip((page - 1) * 15).Take(15)).ConfigureAwait(false);
 
             if (!guilds.Any())
             {
