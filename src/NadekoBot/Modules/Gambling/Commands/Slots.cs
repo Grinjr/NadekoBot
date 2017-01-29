@@ -354,6 +354,7 @@ namespace NadekoBot.Modules.Gambling
                             {
                                 msg = "WOAAHHHHHH!!! Congratulations!!! x10 + the whole pot!";
                                 await CurrencyHandler.AddCurrencyAsync(Context.User, $"Slot Machine won current pot!", currentPot + (amount / 2), false);
+                                Interlocked.Add(ref totalPaidOut, currentPot + (amount / 2));
                                 currentPot = 0;
                                 File.WriteAllText(potFile, currentPot.ToString());
                             }
