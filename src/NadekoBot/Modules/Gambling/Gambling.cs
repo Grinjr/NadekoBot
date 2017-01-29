@@ -21,7 +21,7 @@ namespace NadekoBot.Modules.Gambling
         public static string CurrencyPluralName { get; set; }
         public static string CurrencySign { get; set; }
 
-        public static string coloredNamesFile = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "ColoredNames.txt");
+        public static string coloredNamesFile = "data/ColoredNames.txt";
 
         static Gambling()
         {
@@ -29,6 +29,11 @@ namespace NadekoBot.Modules.Gambling
             CurrencyPluralName = NadekoBot.BotConfig.CurrencyPluralName;
             CurrencySign = NadekoBot.BotConfig.CurrencySign;
 
+
+            if (!System.IO.File.Exists(coloredNamesFile))
+            {
+                System.IO.File.WriteAllText(coloredNamesFile, "");
+            }
             var nameColorTimer = new Timer(async (e) =>
             {
                 await CheckForExpiredColors();
@@ -319,53 +324,53 @@ namespace NadekoBot.Modules.Gambling
             await Context.Channel.SendConfirmAsync(str).ConfigureAwait(false);
         }
 
-        [NadekoCommand, Usage, Description, Aliases]
-        [RequireContext(ContextType.Guild)]
-        [OwnerOnly]
-        public async Task TestDate()
-        {
-            if (!System.IO.File.Exists(coloredNamesFile))
-            {
-                System.IO.File.WriteAllText(coloredNamesFile, "");
-            }
-            IEnumerable<System.String> lines = System.IO.File.ReadLines(coloredNamesFile);
+        //[NadekoCommand, Usage, Description, Aliases]
+        //[RequireContext(ContextType.Guild)]
+        //[OwnerOnly]
+        //public async Task TestDate()
+        //{
+        //    if (!System.IO.File.Exists(coloredNamesFile))
+        //    {
+        //        System.IO.File.WriteAllText(coloredNamesFile, "");
+        //    }
+        //    IEnumerable<System.String> lines = System.IO.File.ReadLines(coloredNamesFile);
 
-            string message = "";
-            int i = 0;
-            bool userExists = false;
-            foreach (string line in lines)
-            {
-                System.String[] substrings = line.Split(',');
-                string userId = substrings[0];
-                System.DateTime expireDate = System.Convert.ToDateTime(substrings[1]);
+        //    string message = "";
+        //    int i = 0;
+        //    bool userExists = false;
+        //    foreach (string line in lines)
+        //    {
+        //        System.String[] substrings = line.Split(',');
+        //        string userId = substrings[0];
+        //        System.DateTime expireDate = System.Convert.ToDateTime(substrings[1]);
 
-                if (i > 0)
-                {
-                    message += "\n";
-                }
-                message += "User ID " + userId + "'s color will expire on: " + expireDate;
+        //        if (i > 0)
+        //        {
+        //            message += "\n";
+        //        }
+        //        message += "User ID " + userId + "'s color will expire on: " + expireDate;
 
-                //IGuildUser user = await Context.Guild.GetUserAsync(System.Convert.ToUInt64(userId));
-                //message += "User " + user.Mention + "'s color will expire on: " + expireDate;
+        //        //IGuildUser user = await Context.Guild.GetUserAsync(System.Convert.ToUInt64(userId));
+        //        //message += "User " + user.Mention + "'s color will expire on: " + expireDate;
 
-                i++;
-                if (Context.User.Id.ToString() == userId) { userExists = true; }
-            }
+        //        i++;
+        //        if (Context.User.Id.ToString() == userId) { userExists = true; }
+        //    }
 
-            if (!userExists)
-            {
-                if (i > 0)
-                {
-                    System.IO.File.AppendAllText(coloredNamesFile, System.Environment.NewLine);
-                    message += "\n";
-                }
-                System.IO.File.AppendAllText(coloredNamesFile, Context.User.Id.ToString() + "," + System.DateTime.Now.AddMonths(1).ToString());
-                message += "User ID " + Context.User.Id.ToString() + "'s color will expire on: " + System.DateTime.Now.AddMonths(1).ToString();
-            }
-            i = 0;
+        //    if (!userExists)
+        //    {
+        //        if (i > 0)
+        //        {
+        //            System.IO.File.AppendAllText(coloredNamesFile, System.Environment.NewLine);
+        //            message += "\n";
+        //        }
+        //        System.IO.File.AppendAllText(coloredNamesFile, Context.User.Id.ToString() + "," + System.DateTime.Now.AddMonths(1).ToString());
+        //        message += "User ID " + Context.User.Id.ToString() + "'s color will expire on: " + System.DateTime.Now.AddMonths(1).ToString();
+        //    }
+        //    i = 0;
 
-            await Context.Channel.SendConfirmAsync(message).ConfigureAwait(false);
-        }
+        //    await Context.Channel.SendConfirmAsync(message).ConfigureAwait(false);
+        //}
 
         [NadekoCommand, Usage, Description, Aliases]
         [RequireContext(ContextType.Guild)]

@@ -23,6 +23,9 @@ namespace NadekoBot.Modules.Gambling
 
             private const string backgroundPath = "data/slots/background.png";
 
+            public static string potFile = "data/SlotsCurrentPot.txt";
+            public static int currentPot = 0;
+
             private static readonly byte[] backgroundBuffer;
             private static readonly byte[][] numbersBuffer = new byte[10][];
             private static readonly byte[][] emojiBuffer;
@@ -47,6 +50,14 @@ namespace NadekoBot.Modules.Gambling
                 for (int i = 0; i < emojiFiles.Length; i++)
                 {
                     emojiBuffer[i] = File.ReadAllBytes(emojiFiles[i]);
+                }
+
+                if (!System.IO.File.Exists(potFile))
+                {
+                    System.IO.File.WriteAllText(potFile, currentPot.ToString());
+                } else
+                {
+                    currentPot = Convert.ToInt32(File.ReadAllText(potFile));
                 }
             }
 
@@ -74,7 +85,7 @@ namespace NadekoBot.Modules.Gambling
                 static readonly List<Func<int[], int>> winningCombos = new List<Func<int[], int>>()
                 {
                     //three flowers
-                    (arr) => arr.All(a=>a==MaxValue) ? 30 : 0,
+                    (arr) => arr.All(a=>a==MaxValue) ? 9 : 0,
                     //three of the same
                     (arr) => !arr.Any(a => a != arr[0]) ? 10 : 0,
                     //two flowers
@@ -127,6 +138,7 @@ namespace NadekoBot.Modules.Gambling
                 var embed = new EmbedBuilder()
                     .WithOkColor()
                     .WithTitle("Slot Stats")
+                    .AddField(efb => efb.WithName("Current Pot").WithValue(currentPot.ToString()).WithIsInline(true))
                     .AddField(efb => efb.WithName("Total Bet").WithValue(bet.ToString()).WithIsInline(true))
                     .AddField(efb => efb.WithName("Paid Out").WithValue(paid.ToString()).WithIsInline(true))
                     .WithFooter(efb => efb.WithText($"Payout Rate: {paid * 1.0 / bet * 100:f4}%"));
@@ -188,6 +200,11 @@ namespace NadekoBot.Modules.Gambling
                         await Context.Channel.SendErrorAsync($"You don't have enough {NadekoBot.BotConfig.CurrencySign}.").ConfigureAwait(false);
                         return;
                     }
+                    else
+                    {
+                        currentPot += amount;
+                        File.WriteAllText(potFile, currentPot.ToString());
+                    }
                     Interlocked.Add(ref totalBet, amount);
                     using (var bgFileStream = new MemoryStream(backgroundBuffer))
                     {
@@ -221,6 +238,10 @@ namespace NadekoBot.Modules.Gambling
                             }
 
                             var won = amount * result.Multiplier;
+                            if (result.Multiplier == 9)
+                            {
+                                won += currentPot;
+                            }
                             var printWon = won;
                             var n = 0;
                             do
@@ -237,7 +258,7 @@ namespace NadekoBot.Modules.Gambling
                                             {
                                                 if (pixels[i, j].A < alphaCutOut)
                                                     continue;
-                                                var x = 230 - n * 16 + i;
+                                                var x = 228 - n * 16 + i;
                                                 bgPixels[x, 462 + j] = pixels[i, j];
                                             }
                                         }
@@ -270,6 +291,35 @@ namespace NadekoBot.Modules.Gambling
                                 }
                                 n++;
                             } while ((printAmount /= 10) != 0);
+
+                            var printPot = currentPot;
+                            if (result.Multiplier == 9)
+                            {
+                                printPot = 0;
+                            }
+                            n = 0;
+                            do
+                            {
+                                var digit = printPot % 10;
+                                using (var fs = new MemoryStream(numbersBuffer[digit]))
+                                {
+                                    var img = new ImageSharp.Image(fs);
+                                    using (var pixels = img.Lock())
+                                    {
+                                        for (int i = 0; i < pixels.Width; i++)
+                                        {
+                                            for (int j = 0; j < pixels.Height; j++)
+                                            {
+                                                if (pixels[i, j].A < alphaCutOut)
+                                                    continue;
+                                                var x = 98 - n * 16 + i;
+                                                bgPixels[x, 211 + j] = pixels[i, j];
+                                            }
+                                        }
+                                    }
+                                }
+                                n++;
+                            } while ((printPot /= 10) != 0);
                         }
 
                         var msg = "Better luck next time ^_^";
@@ -283,8 +333,13 @@ namespace NadekoBot.Modules.Gambling
                                 msg = $"Good job! Two {NadekoBot.BotConfig.CurrencySign} - bet x4";
                             else if (result.Multiplier == 10)
                                 msg = "Wow! Lucky! Three of a kind! x10";
-                            else if (result.Multiplier == 30)
-                                msg = "WOAAHHHHHH!!! Congratulations!!! x30";
+                            else if (result.Multiplier == 9)
+                            {
+                                msg = "WOAAHHHHHH!!! Congratulations!!! x10 + the whole pot!";
+                                await CurrencyHandler.AddCurrencyAsync(Context.User, $"Slot Machine won current pot!", currentPot, false);
+                                currentPot = 0;
+                                File.WriteAllText(potFile, currentPot.ToString());
+                            }
                         }
 
                         await Context.Channel.SendFileAsync(bgImage.ToStream(), "result.png", Context.User.Mention + " " + msg /*+ $"\n`Bet:`{amount} `Won:` {amount * result.Multiplier}{NadekoBot.BotConfig.CurrencySign}"*/).ConfigureAwait(false);

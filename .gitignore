@@ -3,6 +3,8 @@
 src/NadekoBot/credentials.json
 src/NadekoBot/data/NadekoBot.db
 src/NadekoBot/data/musicdata
+src/NadekoBot/data/ColoredNames.txt
+src/NadekoBot/data/SlotsCurrentPot.txt
 
 # Created by https://www.gitignore.io/api/visualstudio,visualstudiocode,windows,linux,macos
 
