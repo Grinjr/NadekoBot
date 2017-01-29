@@ -4812,7 +4812,7 @@ namespace NadekoBot.Resources {
         }
         
         /// <summary>
-        ///    Looks up a localized string similar to next n.
+        ///    Looks up a localized string similar to next n skip.
         /// </summary>
         public static string next_cmd {
             get {
@@ -5406,7 +5406,7 @@ namespace NadekoBot.Resources {
         }
         
         /// <summary>
-        ///    Looks up a localized string similar to queue q yq.
+        ///    Looks up a localized string similar to queue q yq play.
         /// </summary>
         public static string queue_cmd {
             get {

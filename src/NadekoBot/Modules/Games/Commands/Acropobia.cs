@@ -116,7 +116,7 @@ namespace NadekoBot.Modules.Games
 --
 {this.submissions.Aggregate("", (agg, cur) => agg + $"`{++i}.` **{cur.Key.ToLowerInvariant().ToTitleCase()}**\n")}
 --")
-                    .WithFooter(efb => efb.WithText("Vote by typing a number of the submission"));
+                    .WithFooter(efb => efb.WithText("Vote by typing a number of the submission! You have 60 seconds to vote!"));
             }
 
             public async Task Run()
@@ -158,8 +158,8 @@ namespace NadekoBot.Modules.Games
                 this.phase = AcroPhase.Voting;
                 try
                 {
-                    //30 secondds for voting
-                    await Task.Delay(30000, source.Token).ConfigureAwait(false);
+                    //60 secondds for voting
+                    await Task.Delay(60000, source.Token).ConfigureAwait(false);
                     this.phase = AcroPhase.Idle;
                 }
                 catch (OperationCanceledException)
@@ -198,7 +198,7 @@ namespace NadekoBot.Modules.Games
 
                         for (int i = 0; i < startingLetters.Length; i++)
                         {
-                            var letter = startingLetters[i];
+                            var letter  = startingLetters[i];
 
                             if (!inputWords[i].StartsWith(letter.ToString())) // all first letters must match
                                 return;

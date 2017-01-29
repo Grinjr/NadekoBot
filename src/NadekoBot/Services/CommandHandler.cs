@@ -146,6 +146,7 @@ namespace NadekoBot.Services
                 try
                 {
                     await usrMsg.DeleteAsync().ConfigureAwait(false);
+                    await usrMsg.Channel.SendMessageAsync("Sorry about that, " + usrMsg.Author.Mention + "! Server invites are not allowed here as per rule #5.").ConfigureAwait(false);
                     return true;
                 }
                 catch (HttpException ex)

@@ -1432,7 +1432,7 @@
     <value>`{0}linux Spyware Windows`</value>
   </data>
   <data name="next_cmd" xml:space="preserve">
-    <value>next n</value>
+    <value>next n skip</value>
   </data>
   <data name="next_desc" xml:space="preserve">
     <value>Goes to the next song in the queue. You have to be in the same voice channel as the bot. You can skip multiple songs, but in that case songs will not be requeued if {0}rcs or {0}rpl is enabled.</value>
@@ -1468,7 +1468,7 @@
     <value>`{0}p`</value>
   </data>
   <data name="queue_cmd" xml:space="preserve">
-    <value>queue q yq</value>
+    <value>queue q yq play</value>
   </data>
   <data name="queue_desc" xml:space="preserve">
     <value>Queue a song using keywords or a link. Bot will join your voice channel.**You must be in a voice channel**.</value>
