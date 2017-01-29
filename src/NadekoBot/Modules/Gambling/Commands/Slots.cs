@@ -85,13 +85,15 @@ namespace NadekoBot.Modules.Gambling
                 static readonly List<Func<int[], int>> winningCombos = new List<Func<int[], int>>()
                 {
                     //three flowers
-                    (arr) => arr.All(a=>a==MaxValue) ? 9 : 0,
+                    (arr) => arr.All(a => a == MaxValue) ? 9 : 0,
                     //three of the same
                     (arr) => !arr.Any(a => a != arr[0]) ? 10 : 0,
                     //two flowers
                     (arr) => arr.Count(a => a == MaxValue) == 2 ? 4 : 0,
                     //one flower
                     (arr) => arr.Any(a => a == MaxValue) ? 1 : 0,
+                    //two of the same
+                    (arr) => arr.Distinct().Count(a => a != MaxValue) == 2 ? 2 : 0,
                 };
 
                 public static SlotResult Pull()
@@ -242,6 +244,10 @@ namespace NadekoBot.Modules.Gambling
                             {
                                 won += currentPot;
                             }
+                            if (result.Multiplier == 2)
+                            {
+                                won = amount / 2;
+                            }
                             var printWon = won;
                             var n = 0;
                             do
@@ -325,10 +331,20 @@ namespace NadekoBot.Modules.Gambling
                         var msg = "Better luck next time ^_^";
                         if (result.Multiplier != 0)
                         {
-                            await CurrencyHandler.AddCurrencyAsync(Context.User, $"Slot Machine x{result.Multiplier}", amount * result.Multiplier, false);
-                            Interlocked.Add(ref totalPaidOut, amount * result.Multiplier);
+                            if (result.Multiplier != 2)
+                            {
+                                await CurrencyHandler.AddCurrencyAsync(Context.User, $"Slot Machine x{result.Multiplier}", amount * result.Multiplier, false);
+                                Interlocked.Add(ref totalPaidOut, amount * result.Multiplier);
+                            }
+                            else
+                            {
+                                await CurrencyHandler.AddCurrencyAsync(Context.User, $"Slot Machine x0.5", amount / 2, false);
+                                Interlocked.Add(ref totalPaidOut, amount / 2);
+                            }
                             if (result.Multiplier == 1)
                                 msg = $"A single {NadekoBot.BotConfig.CurrencySign}, x1 - Try again!";
+                            else if (result.Multiplier == 2)
+                                msg = $"Two of a kind! Half of your bet back! x0.5";
                             else if (result.Multiplier == 4)
                                 msg = $"Good job! Two {NadekoBot.BotConfig.CurrencySign} - bet x4";
                             else if (result.Multiplier == 10)
