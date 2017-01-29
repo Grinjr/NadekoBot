@@ -243,6 +243,7 @@ namespace NadekoBot.Modules.Gambling
                             if (result.Multiplier == 9)
                             {
                                 won += currentPot;
+                                won += (amount / 2);
                             }
                             if (result.Multiplier == 2)
                             {
@@ -352,7 +353,7 @@ namespace NadekoBot.Modules.Gambling
                             else if (result.Multiplier == 9)
                             {
                                 msg = "WOAAHHHHHH!!! Congratulations!!! x10 + the whole pot!";
-                                await CurrencyHandler.AddCurrencyAsync(Context.User, $"Slot Machine won current pot!", currentPot, false);
+                                await CurrencyHandler.AddCurrencyAsync(Context.User, $"Slot Machine won current pot!", currentPot + (amount / 2), false);
                                 currentPot = 0;
                                 File.WriteAllText(potFile, currentPot.ToString());
                             }
