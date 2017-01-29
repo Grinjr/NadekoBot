@@ -200,9 +200,9 @@ namespace NadekoBot.Modules.Gambling
                         await Context.Channel.SendErrorAsync($"You don't have enough {NadekoBot.BotConfig.CurrencySign}.").ConfigureAwait(false);
                         return;
                     }
-                    else
+                    else if (amount > 1)
                     {
-                        currentPot += amount;
+                        currentPot += (amount / 2);
                         File.WriteAllText(potFile, currentPot.ToString());
                     }
                     Interlocked.Add(ref totalBet, amount);
