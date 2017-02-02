@@ -5,6 +5,7 @@ src/NadekoBot/data/NadekoBot.db
 src/NadekoBot/data/musicdata
 src/NadekoBot/data/ColoredNames.txt
 src/NadekoBot/data/slots/SlotsCurrentPot.txt
+src/NadekoBot/data/slots/winners.txt
 
 # Created by https://www.gitignore.io/api/visualstudio,visualstudiocode,windows,linux,macos
 

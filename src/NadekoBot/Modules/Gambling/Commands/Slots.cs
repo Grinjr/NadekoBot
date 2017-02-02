@@ -23,8 +23,9 @@ namespace NadekoBot.Modules.Gambling
 
             private const string backgroundPath = "data/slots/background.png";
 
-            public static string potFile = "data/SlotsCurrentPot.txt";
+            public static string potFile = "data/slots/SlotsCurrentPot.txt";
             public static int currentPot = 0;
+            public static string winnersFile = "data/slots/winners.txt";
 
             private static readonly byte[] backgroundBuffer;
             private static readonly byte[][] numbersBuffer = new byte[10][];
@@ -58,6 +59,11 @@ namespace NadekoBot.Modules.Gambling
                 } else
                 {
                     currentPot = Convert.ToInt32(File.ReadAllText(potFile));
+                }
+
+                if (!System.IO.File.Exists(winnersFile))
+                {
+                    File.WriteAllText(winnersFile, "");
                 }
             }
 
@@ -159,6 +165,24 @@ namespace NadekoBot.Modules.Gambling
                 for (int i = 0; i < tests; i++)
                 {
                     var res = SlotMachine.Pull();
+                    if (res.Multiplier == 9)
+                    {
+                        List<string> lines = File.ReadLines(coloredNamesFile).ToList();
+                        foreach (string line in lines)
+                        {
+                            String[] substrings = line.Split(',');
+                            string userId = substrings[0];
+                            DateTime winDate = Convert.ToDateTime(substrings[1]);
+
+                            // if users id matches and it hasn't been a month yet then roll again
+                            if (userId == Context.User.Id.ToString() && winDate.AddMonths(1) > DateTime.Now)
+                            {
+                                res = SlotMachine.Pull();
+                                // if the user wins a jackpot a 2nd time then gosh darn they deserve it
+                                break;
+                            }
+                        }
+                    }
                     if (dict.ContainsKey(res.Multiplier))
                         dict[res.Multiplier] += 1;
                     else
@@ -213,6 +237,24 @@ namespace NadekoBot.Modules.Gambling
                         var bgImage = new ImageSharp.Image(bgFileStream);
 
                         var result = SlotMachine.Pull();
+                        if (result.Multiplier == 9)
+                        {
+                            List<string> lines = File.ReadLines(coloredNamesFile).ToList();
+                            foreach (string line in lines)
+                            {
+                                String[] substrings = line.Split(',');
+                                string userId = substrings[0];
+                                DateTime winDate = Convert.ToDateTime(substrings[1]);
+
+                                // if users id matches and it hasn't been a month yet then roll again
+                                if (userId == Context.User.Id.ToString() && winDate.AddMonths(1) > DateTime.Now)
+                                {
+                                    result = SlotMachine.Pull();
+                                    // if the user wins a jackpot a 2nd time then gosh darn they deserve it
+                                    break;
+                                }
+                            }
+                        }
                         int[] numbers = result.Numbers;
                         using (var bgPixels = bgImage.Lock())
                         {
@@ -357,6 +399,7 @@ namespace NadekoBot.Modules.Gambling
                                 Interlocked.Add(ref totalPaidOut, currentPot + (amount / 2));
                                 currentPot = 0;
                                 File.WriteAllText(potFile, currentPot.ToString());
+                                File.AppendAllText(winnersFile, Context.User.Id + "," + DateTime.Now.ToString() + "\n");
                             }
                         }
 
