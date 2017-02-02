@@ -167,7 +167,7 @@ namespace NadekoBot.Modules.Gambling
                     var res = SlotMachine.Pull();
                     if (res.Multiplier == 9)
                     {
-                        List<string> lines = File.ReadLines(coloredNamesFile).ToList();
+                        List<string> lines = File.ReadLines(winnersFile).ToList();
                         foreach (string line in lines)
                         {
                             String[] substrings = line.Split(',');
@@ -239,7 +239,7 @@ namespace NadekoBot.Modules.Gambling
                         var result = SlotMachine.Pull();
                         if (result.Multiplier == 9)
                         {
-                            List<string> lines = File.ReadLines(coloredNamesFile).ToList();
+                            List<string> lines = File.ReadLines(winnersFile).ToList();
                             foreach (string line in lines)
                             {
                                 String[] substrings = line.Split(',');
