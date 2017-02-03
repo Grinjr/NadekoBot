@@ -282,9 +282,11 @@ namespace NadekoBot.Modules.Gambling
                             }
                         }
 
-                        if (amount > 1 && result.Multiplier <= 2)
+                        if (amount > 1 && result.Multiplier <= 2 && result.Multiplier != 1)
                         {
-                            potTempPool += amount * 0.25;
+                            if (currentPot <= 0)
+                                currentPot = 0;
+                            potTempPool += amount * 0.5;
                             if (potTempPool >= 1)
                             {
                                 for (int i = 1; i <= potTempPool; potTempPool -= i)
@@ -322,14 +324,30 @@ namespace NadekoBot.Modules.Gambling
                             }
 
                             var won = amount * result.Multiplier;
-                            if (result.Multiplier == 4)
+                            switch (result.Multiplier)
                             {
-                                won += currentPot;
-                                won += Convert.ToInt32(amount * 0.75);
-                            }
-                            if (result.Multiplier == 2)
-                            {
-                                won = amount / 2;
+                                case 2:
+                                    won = amount / 2;
+                                    break;
+
+                                case 3: case 5:
+                                    if (currentPot >= amount * (result.Multiplier - 1))
+                                    {
+                                        currentPot -= amount * (result.Multiplier - 1);
+                                    }
+                                    else
+                                    {
+                                        currentPot = 0;
+                                    }
+                                    break;
+
+                                case 4:
+                                    won += currentPot;
+                                    won += Convert.ToInt32(amount * 0.75);
+                                    break;
+
+                                default:
+                                    break;
                             }
                             var printWon = won;
                             var n = 0;
@@ -435,8 +453,8 @@ namespace NadekoBot.Modules.Gambling
                             else if (result.Multiplier == 4)
                             {
                                 msg = "WOAAHHHHHH!!! Congratulations!!! x5 + the whole pot!";
-                                await CurrencyHandler.AddCurrencyAsync(Context.User, $"Slot Machine won current pot!", currentPot + Convert.ToInt32(amount * 0.75), false);
-                                Interlocked.Add(ref totalPaidOut, currentPot + Convert.ToInt32(amount * 0.75));
+                                await CurrencyHandler.AddCurrencyAsync(Context.User, $"Slot Machine won current pot!", currentPot + Convert.ToInt32(amount * 0.5), false);
+                                Interlocked.Add(ref totalPaidOut, currentPot + Convert.ToInt32(amount * 0.5));
                                 currentPot = 0;
                                 File.WriteAllText(potFile, currentPot.ToString());
                                 File.AppendAllText(winnersFile, Context.User.Id + "," + DateTime.Now.ToString() + Environment.NewLine);
