@@ -25,6 +25,7 @@ namespace NadekoBot.Modules.Gambling
 
             public static string potFile = "data/slots/SlotsCurrentPot.txt";
             public static int currentPot = 0;
+            private static double potTempPool = 0;
             public static string winnersFile = "data/slots/winners.txt";
 
             private static readonly byte[] backgroundBuffer;
@@ -91,11 +92,11 @@ namespace NadekoBot.Modules.Gambling
                 static readonly List<Func<int[], int>> winningCombos = new List<Func<int[], int>>()
                 {
                     //three flowers
-                    (arr) => arr.All(a => a == MaxValue) ? 9 : 0,
+                    (arr) => arr.All(a => a == MaxValue) ? 4 : 0,
                     //three of the same
-                    (arr) => !arr.Any(a => a != arr[0]) ? 10 : 0,
+                    (arr) => !arr.Any(a => a != arr[0]) ? 5 : 0,
                     //two flowers
-                    (arr) => arr.Count(a => a == MaxValue) == 2 ? 4 : 0,
+                    (arr) => arr.Count(a => a == MaxValue) == 2 ? 3 : 0,
                     //one flower
                     (arr) => arr.Any(a => a == MaxValue) ? 1 : 0,
                     //two of the same
@@ -108,6 +109,14 @@ namespace NadekoBot.Modules.Gambling
                     for (int i = 0; i < numbers.Length; i++)
                     {
                         numbers[i] = new NadekoRandom().Next(0, MaxValue + 1);
+                        //if (numbers[i] == MaxValue)
+                        //{
+                        //    var rand = new Random().Next(0, 0);
+                        //    if (rand == 0)
+                        //    {
+                        //        numbers[i] = new NadekoRandom().Next(0, MaxValue + 1);
+                        //    }
+                        //}
                     }
                     int multi = 0;
                     for (int i = 0; i < winningCombos.Count; i++)
@@ -162,29 +171,36 @@ namespace NadekoBot.Modules.Gambling
                     return;
                 //multi vs how many times it occured
                 var dict = new Dictionary<int, int>();
+                int winCount = 0;
+                List<string> lines = File.ReadLines(winnersFile).ToList();
+                foreach (string line in lines)
+                {
+                    String[] substrings = line.Split(',');
+                    string userId = substrings[0];
+                    DateTime winDate = Convert.ToDateTime(substrings[1]);
+                    // if users id matches and it hasn't been a month yet then add 1 to winCount
+                    if (userId == Context.User.Id.ToString() && winDate.AddMonths(1) > DateTime.Now)
+                    {
+                        winCount += 1;
+                    }
+                }
+
                 for (int i = 0; i < tests; i++)
                 {
                     var res = SlotMachine.Pull();
-                    if (res.Multiplier == 9)
+                    
+                    if (res.Multiplier == 4)
                     {
-                        List<string> lines = File.ReadLines(winnersFile).ToList();
-                        foreach (string line in lines)
+                        var rand = new Random().Next(1, Convert.ToInt32(Math.Pow(4, winCount)));
+                        if (rand != 1)
                         {
-                            String[] substrings = line.Split(',');
-                            string userId = substrings[0];
-                            DateTime winDate = Convert.ToDateTime(substrings[1]);
-
-                            // if users id matches and it hasn't been a month yet then roll again
-                            if (userId == Context.User.Id.ToString() && winDate.AddMonths(1) > DateTime.Now)
-                            {
-                                res = SlotMachine.Pull();
-                                // if the user wins a jackpot a 2nd time then gosh darn they deserve it
-                                break;
-                            }
+                            res = SlotMachine.Pull();
                         }
                     }
                     if (dict.ContainsKey(res.Multiplier))
+                    {
                         dict[res.Multiplier] += 1;
+                    }
                     else
                         dict.Add(res.Multiplier, 1);
                 }
@@ -194,8 +210,19 @@ namespace NadekoBot.Modules.Gambling
                 int payout = 0;
                 foreach (var key in dict.Keys.OrderByDescending(x=>x))
                 {
-                    sb.AppendLine($"x{key} occured {dict[key]} times. {dict[key] * 1.0f / tests * 100}%");
-                    payout += key * dict[key];
+                    if (key == 2)
+                    {
+                        sb.AppendLine($"x0.5 occured {dict[key]} times. {dict[key] * 1.0f / tests * 100}%");
+                        payout += key * (dict[key] / 2);
+                    } else
+                    {
+                        sb.AppendLine($"x{key} occured {dict[key]} times. {dict[key] * 1.0f / tests * 100}%");
+                        payout += key * dict[key];
+                    }
+                    if (key == 4)
+                    {
+                        payout += dict[key];
+                    }
                 }
                 await Context.Channel.SendConfirmAsync("Slot Test Results", sb.ToString(),
                     footer: $"Total Bet: {tests * bet} | Payout: {payout * bet} | {payout * 1.0f / tests * 100}%");
@@ -226,35 +253,48 @@ namespace NadekoBot.Modules.Gambling
                         await Context.Channel.SendErrorAsync($"You don't have enough {NadekoBot.BotConfig.CurrencySign}.").ConfigureAwait(false);
                         return;
                     }
-                    else if (amount > 1)
-                    {
-                        currentPot += (amount / 2);
-                        File.WriteAllText(potFile, currentPot.ToString());
-                    }
                     Interlocked.Add(ref totalBet, amount);
                     using (var bgFileStream = new MemoryStream(backgroundBuffer))
                     {
                         var bgImage = new ImageSharp.Image(bgFileStream);
 
                         var result = SlotMachine.Pull();
-                        if (result.Multiplier == 9)
+                        if (result.Multiplier == 4)
                         {
+                            int winCount = 0;
                             List<string> lines = File.ReadLines(winnersFile).ToList();
                             foreach (string line in lines)
                             {
                                 String[] substrings = line.Split(',');
                                 string userId = substrings[0];
                                 DateTime winDate = Convert.ToDateTime(substrings[1]);
-
-                                // if users id matches and it hasn't been a month yet then roll again
+                                // if users id matches and it hasn't been a month yet then add 1 to winCount
                                 if (userId == Context.User.Id.ToString() && winDate.AddMonths(1) > DateTime.Now)
                                 {
-                                    result = SlotMachine.Pull();
-                                    // if the user wins a jackpot a 2nd time then gosh darn they deserve it
-                                    break;
+                                    winCount += 1;
                                 }
                             }
+
+                            var rand = new Random().Next(0, Convert.ToInt32(Math.Pow(winCount, 4)));
+                            if (rand != 0)
+                            {
+                                result = SlotMachine.Pull();
+                            }
                         }
+
+                        if (amount > 1 && result.Multiplier <= 2)
+                        {
+                            potTempPool += amount * 0.25;
+                            if (potTempPool >= 1)
+                            {
+                                for (int i = 1; i <= potTempPool; potTempPool -= i)
+                                {
+                                    currentPot += i;
+                                }
+                                File.WriteAllText(potFile, currentPot.ToString());
+                            }
+                        }
+
                         int[] numbers = result.Numbers;
                         using (var bgPixels = bgImage.Lock())
                         {
@@ -282,10 +322,10 @@ namespace NadekoBot.Modules.Gambling
                             }
 
                             var won = amount * result.Multiplier;
-                            if (result.Multiplier == 9)
+                            if (result.Multiplier == 4)
                             {
                                 won += currentPot;
-                                won += (amount / 2);
+                                won += Convert.ToInt32(amount * 0.75);
                             }
                             if (result.Multiplier == 2)
                             {
@@ -342,7 +382,7 @@ namespace NadekoBot.Modules.Gambling
                             } while ((printAmount /= 10) != 0);
 
                             var printPot = currentPot;
-                            if (result.Multiplier == 9)
+                            if (result.Multiplier == 4)
                             {
                                 printPot = 0;
                             }
@@ -381,25 +421,25 @@ namespace NadekoBot.Modules.Gambling
                             }
                             else
                             {
-                                await CurrencyHandler.AddCurrencyAsync(Context.User, $"Slot Machine x0.5", amount / 2, false);
-                                Interlocked.Add(ref totalPaidOut, amount / 2);
+                                await CurrencyHandler.AddCurrencyAsync(Context.User, $"Slot Machine x0.5", Convert.ToInt32(amount * 0.5), false);
+                                Interlocked.Add(ref totalPaidOut, Convert.ToInt32(amount * 0.5));
                             }
                             if (result.Multiplier == 1)
                                 msg = $"A single {NadekoBot.BotConfig.CurrencySign}, x1 - Try again!";
                             else if (result.Multiplier == 2)
                                 msg = $"Two of a kind! Half of your bet back! x0.5";
+                            else if (result.Multiplier == 3)
+                                msg = $"Good job! Two {NadekoBot.BotConfig.CurrencySign} - bet x3";
+                            else if (result.Multiplier == 5)
+                                msg = "Wow! Lucky! Three of a kind! x5";
                             else if (result.Multiplier == 4)
-                                msg = $"Good job! Two {NadekoBot.BotConfig.CurrencySign} - bet x4";
-                            else if (result.Multiplier == 10)
-                                msg = "Wow! Lucky! Three of a kind! x10";
-                            else if (result.Multiplier == 9)
                             {
-                                msg = "WOAAHHHHHH!!! Congratulations!!! x10 + the whole pot!";
-                                await CurrencyHandler.AddCurrencyAsync(Context.User, $"Slot Machine won current pot!", currentPot + (amount / 2), false);
-                                Interlocked.Add(ref totalPaidOut, currentPot + (amount / 2));
+                                msg = "WOAAHHHHHH!!! Congratulations!!! x5 + the whole pot!";
+                                await CurrencyHandler.AddCurrencyAsync(Context.User, $"Slot Machine won current pot!", currentPot + Convert.ToInt32(amount * 0.75), false);
+                                Interlocked.Add(ref totalPaidOut, currentPot + Convert.ToInt32(amount * 0.75));
                                 currentPot = 0;
                                 File.WriteAllText(potFile, currentPot.ToString());
-                                File.AppendAllText(winnersFile, Context.User.Id + "," + DateTime.Now.ToString() + "\n");
+                                File.AppendAllText(winnersFile, Context.User.Id + "," + DateTime.Now.ToString() + Environment.NewLine);
                             }
                         }
 
