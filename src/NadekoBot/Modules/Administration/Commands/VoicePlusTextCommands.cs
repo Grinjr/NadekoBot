@@ -65,7 +65,7 @@ namespace NadekoBot.Modules.Administration
                         {
                             try
                             {
-                                await guild.Owner.SendErrorAsync(
+                                await guild.SendMessageToOwnerAsync(
                                     "⚠️ I don't have **manage server** and/or **manage channels** permission," +
                                     $" so I cannot run `voice+text` on **{guild.Name}** server.").ConfigureAwait(false);
                             }
@@ -103,7 +103,7 @@ namespace NadekoBot.Modules.Administration
                                     }
                             }
                             var afterVch = after.VoiceChannel;
-                            if (afterVch != null && guild.AFKChannel?.Id != afterVch.Id)
+                            if (afterVch != null && guild.AFKChannel.Id != afterVch.Id)
                             {
                                 var roleName = GetRoleName(afterVch);
                                 IRole roleToAdd = guild.Roles.FirstOrDefault(x => x.Name == roleName);
