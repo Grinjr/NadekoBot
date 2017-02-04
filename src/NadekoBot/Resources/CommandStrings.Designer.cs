@@ -5622,6 +5622,33 @@ namespace NadekoBot.Resources {
         }
         
         /// <summary>
+        ///    Looks up a localized string similar to reloadimages.
+        /// </summary>
+        public static string reloadimages_cmd {
+            get {
+                return ResourceManager.GetString("reloadimages_cmd", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///    Looks up a localized string similar to Reloads images bot is using. Safe to use even when bot is being used heavily..
+        /// </summary>
+        public static string reloadimages_desc {
+            get {
+                return ResourceManager.GetString("reloadimages_desc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///    Looks up a localized string similar to `{0}reloadimages`.
+        /// </summary>
+        public static string reloadimages_usage {
+            get {
+                return ResourceManager.GetString("reloadimages_usage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///    Looks up a localized string similar to remind.
         /// </summary>
         public static string remind_cmd {
@@ -6779,6 +6806,33 @@ namespace NadekoBot.Resources {
         public static string setmaxqueue_usage {
             get {
                 return ResourceManager.GetString("setmaxqueue_usage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///    Looks up a localized string similar to setmusicchannel smch.
+        /// </summary>
+        public static string setmusicchannel_cmd {
+            get {
+                return ResourceManager.GetString("setmusicchannel_cmd", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///    Looks up a localized string similar to Sets the current channel as the default music output channel. This will output playing, finished, paused and removed songs to that channel instead of the channel where the first song was queued in..
+        /// </summary>
+        public static string setmusicchannel_desc {
+            get {
+                return ResourceManager.GetString("setmusicchannel_desc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///    Looks up a localized string similar to `{0}smch`.
+        /// </summary>
+        public static string setmusicchannel_usage {
+            get {
+                return ResourceManager.GetString("setmusicchannel_usage", resourceCulture);
             }
         }
         
@@ -8394,7 +8448,7 @@ namespace NadekoBot.Resources {
         }
         
         /// <summary>
-        ///    Looks up a localized string similar to `{0}voice+text`.
+        ///    Looks up a localized string similar to `{0}v+t`.
         /// </summary>
         public static string voiceplustext_usage {
             get {

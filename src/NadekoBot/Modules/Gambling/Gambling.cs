@@ -153,7 +153,7 @@ namespace NadekoBot.Modules.Gambling
                 return;
             }
             await CurrencyHandler.AddCurrencyAsync(receiver, $"Gift from {Context.User.Username} ({Context.User.Id}).", amount, true).ConfigureAwait(false);
-            await Context.Channel.SendConfirmAsync($"{Context.User.Mention} successfully sent {amount} {(amount == 1 ? CurrencyName : CurrencyPluralName)} to {receiver}!").ConfigureAwait(false);
+            await Context.Channel.SendConfirmAsync($"{Context.User.Mention} gifted {amount}{CurrencySign} to {Format.Bold(receiver.ToString())}!").ConfigureAwait(false);
         }
 
         [NadekoCommand, Usage, Description, Aliases]
@@ -173,7 +173,7 @@ namespace NadekoBot.Modules.Gambling
 
             await CurrencyHandler.AddCurrencyAsync(usrId, $"Awarded by bot owner. ({Context.User.Username}/{Context.User.Id})", amount).ConfigureAwait(false);
 
-            await Context.Channel.SendConfirmAsync($"{Context.User.Mention} awarded {amount} {(amount == 1 ? CurrencyName : CurrencyPluralName)} to <@{usrId}>!").ConfigureAwait(false);
+            await Context.Channel.SendConfirmAsync($"{Context.User.Mention} awarded {amount}{CurrencySign} to <@{usrId}>!").ConfigureAwait(false);
         }
 
         [NadekoCommand, Usage, Description, Aliases]

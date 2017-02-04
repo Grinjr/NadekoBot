@@ -340,7 +340,7 @@
     <value>Creates a text channel for each voice channel only users in that voice channel can see.If you are server owner, keep in mind you will see them all the time regardless.</value>
   </data>
   <data name="voiceplustext_usage" xml:space="preserve">
-    <value>`{0}voice+text`</value>
+    <value>`{0}v+t`</value>
   </data>
   <data name="scsc_cmd" xml:space="preserve">
     <value>scsc</value>
@@ -3033,7 +3033,25 @@
   <data name="mal_usage" xml:space="preserve">
     <value>`{0}mal straysocks`</value>
   </data>
-  <data name="shop_cmd" xml:space="preserve">
+  <data name="setmusicchannel_cmd" xml:space="preserve">
+    <value>setmusicchannel smch</value>
+  </data>
+  <data name="setmusicchannel_desc" xml:space="preserve">
+    <value>Sets the current channel as the default music output channel. This will output playing, finished, paused and removed songs to that channel instead of the channel where the first song was queued in.</value>
+  </data>
+  <data name="setmusicchannel_usage" xml:space="preserve">
+    <value>`{0}smch`</value>
+  </data>
+  <data name="reloadimages_cmd" xml:space="preserve">
+    <value>reloadimages</value>
+  </data>
+  <data name="reloadimages_desc" xml:space="preserve">
+    <value>Reloads images bot is using. Safe to use even when bot is being used heavily.</value>
+  </data>
+  <data name="reloadimages_usage" xml:space="preserve">
+    <value>`{0}reloadimages`</value>
+  </data>
+    <data name="shop_cmd" xml:space="preserve">
     <value>shop</value>
   </data>
   <data name="shop_desc" xml:space="preserve">

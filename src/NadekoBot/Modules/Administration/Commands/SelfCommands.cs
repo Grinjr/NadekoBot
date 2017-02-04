@@ -3,6 +3,7 @@ using Discord.Commands;
 using NadekoBot.Attributes;
 using NadekoBot.Extensions;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -132,7 +133,7 @@ namespace NadekoBot.Modules.Administration
                 if (ids[1].ToUpperInvariant().StartsWith("C:"))
                 {
                     var cid = ulong.Parse(ids[1].Substring(2));
-                    var ch = (await server.GetTextChannelsAsync()).Where(c => c.Id == cid).FirstOrDefault();
+                    var ch = server.TextChannels.Where(c => c.Id == cid).FirstOrDefault();
                     if (ch == null)
                     {
                         return;
@@ -159,15 +160,27 @@ namespace NadekoBot.Modules.Administration
             [OwnerOnly]
             public async Task Announce([Remainder] string message)
             {
-                var channels = await Task.WhenAll(NadekoBot.Client.Guilds.Select(g =>
-                    g.GetDefaultChannelAsync()
-                )).ConfigureAwait(false);
+                var channels = NadekoBot.Client.GetGuilds().Select(g => g.DefaultChannel).ToArray();
                 if (channels == null)
                     return;
                 await Task.WhenAll(channels.Where(c => c != null).Select(c => c.SendConfirmAsync($"🆕 Message from {Context.User} `[Bot Owner]`:", message)))
                         .ConfigureAwait(false);
 
                 await Context.Channel.SendConfirmAsync("🆗").ConfigureAwait(false);
+            }
+
+            [NadekoCommand, Usage, Description, Aliases]
+            [OwnerOnly]
+            public async Task ReloadImages()
+            {
+                var msg = await Context.Channel.SendMessageAsync("Reloading Images...").ConfigureAwait(false);
+                var sw = Stopwatch.StartNew();
+                await NadekoBot.Images.Reload().ConfigureAwait(false);
+                sw.Stop();
+                await msg.ModifyAsync(x =>
+                {
+                    x.Content = "✅ Images reloaded.";
+                }).ConfigureAwait(false);
             }
 
             private static UserStatus SettableUserStatusToUserStatus(SettableUserStatus sus)
@@ -185,6 +198,14 @@ namespace NadekoBot.Modules.Administration
                 }
 
                 return UserStatus.Online;
+            }
+
+            public enum SettableUserStatus
+            {
+                Online,
+                Invisible,
+                Idle,
+                Dnd
             }
         }
     }
