@@ -45,13 +45,14 @@ namespace NadekoBot.Services.Database.Models
         public string DMHelpString { get; set; } = "Type `-h` for help.";
         public string HelpString { get; set; } = @"You can use `{1}modules` command to see a list of all modules.
 You can use `{1}commands ModuleName`
-(for example `{1}commands Gambling`) to see a list of all of the commands in that module.
-For a specific command help, use `{1}h CommandName` (for example {1}h !!q)";
+(for example `{1}commands Administration`) to see a list of all of the commands in that module.
+For a specific command help, use `{1}h CommandName` (for example {1}h !!q)
 
         public int MigrationVersion { get; set; }
 
         public string OkColor { get; set; } = "71cd40";
         public string ErrorColor { get; set; } = "ee281f";
+        public string Locale { get; set; } = null;
     }
 
     public class PlayingStatus :DbEntity
