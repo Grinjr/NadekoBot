@@ -27,13 +27,13 @@ namespace NadekoBot.Modules.ClashOfClans
         public static void Call(this ClashWar cw, string u, int baseNumber)
         {
             if (baseNumber < 0 || baseNumber >= cw.Bases.Count)
-                throw new ArgumentException(cw.Localize("invalid_base_number"));
+                throw new ArgumentException("Invalid base number");
             if (cw.Bases[baseNumber].CallUser != null && cw.Bases[baseNumber].Stars == 3)
-                throw new ArgumentException(cw.Localize("base_already_claimed"));
+                throw new ArgumentException("That base is already destroyed.");
             for (var i = 0; i < cw.Bases.Count; i++)
             {
                 if (cw.Bases[i]?.BaseDestroyed == false && cw.Bases[i]?.CallUser == u)
-                    throw new ArgumentException(cw.Localize("claimed_other", u, i + 1));
+                    throw new ArgumentException($"@{u} You already claimed base #{i + 1}. You can't claim a new one.");
             }
 
             var cc = cw.Bases[baseNumber];
@@ -45,7 +45,7 @@ namespace NadekoBot.Modules.ClashOfClans
         public static void Start(this ClashWar cw)
         {
             if (cw.WarState == StateOfWar.Started)
-                throw new InvalidOperationException("war_already_started");
+                throw new InvalidOperationException("War already started");
             //if (Started)
             //    throw new InvalidOperationException();
             //Started = true;
@@ -66,7 +66,7 @@ namespace NadekoBot.Modules.ClashOfClans
                 cw.Bases[i].CallUser = null;
                 return i;
             }
-            throw new InvalidOperationException(cw.Localize("not_partic"));
+            throw new InvalidOperationException("You are not participating in that war.");
         }
 
         public static string ShortPrint(this ClashWar cw) =>
@@ -75,7 +75,8 @@ namespace NadekoBot.Modules.ClashOfClans
         public static string ToPrettyString(this ClashWar cw)
         {
             var sb = new StringBuilder();
-            
+
+            sb.AppendLine($"🔰**WAR AGAINST `{cw.EnemyClan}` ({cw.Size} v {cw.Size}) INFO:**");
             if (cw.WarState == StateOfWar.Created)
                 sb.AppendLine("`not started`");
             var twoHours = new TimeSpan(2, 0, 0);
@@ -83,7 +84,7 @@ namespace NadekoBot.Modules.ClashOfClans
             {
                 if (cw.Bases[i].CallUser == null)
                 {
-                    sb.AppendLine($"`{i + 1}.` ❌*{cw.Localize("not_claimed")}*");
+                    sb.AppendLine($"`{i + 1}.` ❌*unclaimed*");
                 }
                 else
                 {
@@ -119,7 +120,7 @@ namespace NadekoBot.Modules.ClashOfClans
                 cw.Bases[i].Stars = stars;
                 return i;
             }
-            throw new InvalidOperationException(cw.Localize("not_partic_or_destroyed", user));
+            throw new InvalidOperationException($"@{user} You are either not participating in that war, or you already destroyed a base.");
         }
 
         public static void FinishClaim(this ClashWar cw, int index, int stars = 3)
@@ -127,22 +128,10 @@ namespace NadekoBot.Modules.ClashOfClans
             if (index < 0 || index > cw.Bases.Count)
                 throw new ArgumentOutOfRangeException(nameof(index));
             var toFinish = cw.Bases[index];
-            if (toFinish.BaseDestroyed != false) throw new InvalidOperationException(cw.Localize("base_already_destroyed"));
-            if (toFinish.CallUser == null) throw new InvalidOperationException(cw.Localize("base_already_unclaimed"));
+            if (toFinish.BaseDestroyed != false) throw new InvalidOperationException("That base is already destroyed.");
+            if (toFinish.CallUser == null) throw new InvalidOperationException("That base is unclaimed.");
             toFinish.BaseDestroyed = true;
             toFinish.Stars = stars;
-        }
-
-        public static string Localize(this ClashWar cw, string key)
-        {
-            return NadekoTopLevelModule.GetTextStatic(key,
-                NadekoBot.Localization.GetCultureInfo(cw.Channel?.GuildId),
-                typeof(ClashOfClans).Name.ToLowerInvariant());
-        }
-
-        public static string Localize(this ClashWar cw, string key, params object[] replacements)
-        {
-            return string.Format(cw.Localize(key), replacements);
         }
     }
 }

@@ -3,139 +3,19 @@ using Discord.Commands;
 using NadekoBot.Attributes;
 using NadekoBot.Extensions;
 using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Discord.WebSocket;
-using NadekoBot.Services;
 
 namespace NadekoBot.Modules.Administration
 {
     public partial class Administration
     {
         [Group]
-        public class SelfCommands : NadekoSubmodule
+        class SelfCommands : ModuleBase
         {
-            private static volatile bool _forwardDMs;
-            private static volatile bool _forwardDMsToAllOwners;
-
-            private static readonly object _locker = new object();
-
-            static SelfCommands()
-            {
-                using (var uow = DbHandler.UnitOfWork())
-                {
-                    var config = uow.BotConfig.GetOrCreate();
-                    _forwardDMs = config.ForwardMessages;
-                    _forwardDMsToAllOwners = config.ForwardToAllOwners;
-                }
-            }
-
-            [NadekoCommand, Usage, Description, Aliases]
-            [OwnerOnly]
-            public async Task ForwardMessages()
-            {
-                using (var uow = DbHandler.UnitOfWork())
-                {
-                    var config = uow.BotConfig.GetOrCreate();
-                    lock (_locker)
-                        _forwardDMs = config.ForwardMessages = !config.ForwardMessages;
-                    uow.Complete();
-                }
-                if (_forwardDMs)
-                    await ReplyConfirmLocalized("fwdm_start").ConfigureAwait(false);
-                else
-                    await ReplyConfirmLocalized("fwdm_stop").ConfigureAwait(false);
-            }
-
-            [NadekoCommand, Usage, Description, Aliases]
-            [OwnerOnly]
-            public async Task ForwardToAll()
-            {
-                using (var uow = DbHandler.UnitOfWork())
-                {
-                    var config = uow.BotConfig.GetOrCreate();
-                    lock (_locker)
-                        _forwardDMsToAllOwners = config.ForwardToAllOwners = !config.ForwardToAllOwners;
-                    uow.Complete();
-                }
-                if (_forwardDMsToAllOwners)
-                    await ReplyConfirmLocalized("fwall_start").ConfigureAwait(false);
-                else
-                    await ReplyConfirmLocalized("fwall_stop").ConfigureAwait(false);
-
-            }
-
-            public static async Task HandleDmForwarding(SocketMessage msg, List<IDMChannel> ownerChannels)
-            {
-                if (_forwardDMs && ownerChannels.Any())
-                {
-                    var title = GetTextStatic("dm_from",
-                                    NadekoBot.Localization.DefaultCultureInfo,
-                                    typeof(Administration).Name.ToLowerInvariant()) +
-                                $" [{msg.Author}]({msg.Author.Id})";
-
-                    var attachamentsTxt = GetTextStatic("attachments",
-                        NadekoBot.Localization.DefaultCultureInfo,
-                        typeof(Administration).Name.ToLowerInvariant());
-
-                    var toSend = msg.Content;
-
-                    if (msg.Attachments.Count > 0)
-                    {
-                        toSend += $"\n\n{Format.Code(attachamentsTxt)}:\n" +
-                                  string.Join("\n", msg.Attachments.Select(a => a.ProxyUrl));
-                    }
-
-                    if (_forwardDMsToAllOwners)
-                    {
-                        await Task.WhenAll(ownerChannels.Where(ch => ch.Recipient.Id != msg.Author.Id)
-                            .Select(ch => ch.SendConfirmAsync(title, toSend))).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        var firstOwnerChannel = ownerChannels.First();
-                        if (firstOwnerChannel.Recipient.Id != msg.Author.Id)
-                        {
-                            try
-                            {
-                                await firstOwnerChannel.SendConfirmAsync(title, toSend).ConfigureAwait(false);
-                            }
-                            catch
-                            {
-                                // ignored
-                            }
-                        }
-                    }
-                }
-            }
-
-
-            [NadekoCommand, Usage, Description, Aliases]
-            [OwnerOnly]
-            public async Task ConnectShard(int shardid)
-            {
-                var shard = NadekoBot.Client.GetShard(shardid);
-
-                if (shard == null)
-                {
-                    await ReplyErrorLocalized("no_shard_id").ConfigureAwait(false);
-                    return;
-                }
-                try
-                {
-                    await ReplyConfirmLocalized("shard_reconnecting", Format.Bold("#" + shardid)).ConfigureAwait(false);
-                    await shard.ConnectAsync().ConfigureAwait(false);
-                    await ReplyConfirmLocalized("shard_reconnected", Format.Bold("#" + shardid)).ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    _log.Warn(ex);
-                }
-            }
-
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public async Task Leave([Remainder] string guildStr)
@@ -146,18 +26,18 @@ namespace NadekoBot.Modules.Administration
 
                 if (server == null)
                 {
-                    await ReplyErrorLocalized("no_server").ConfigureAwait(false);
+                    await Context.Channel.SendErrorAsync("⚠️ Cannot find that server").ConfigureAwait(false);
                     return;
                 }
                 if (server.OwnerId != NadekoBot.Client.CurrentUser.Id)
                 {
                     await server.LeaveAsync().ConfigureAwait(false);
-                    await ReplyConfirmLocalized("left_server", Format.Bold(server.Name)).ConfigureAwait(false);
+                    await Context.Channel.SendConfirmAsync("✅ Left server " + server.Name).ConfigureAwait(false);
                 }
                 else
                 {
                     await server.DeleteAsync().ConfigureAwait(false);
-                    await ReplyConfirmLocalized("deleted_server",Format.Bold(server.Name)).ConfigureAwait(false);
+                    await Context.Channel.SendConfirmAsync("Deleted server " + server.Name).ConfigureAwait(false);
                 }
             }
 
@@ -166,14 +46,7 @@ namespace NadekoBot.Modules.Administration
             [OwnerOnly]
             public async Task Die()
             {
-                try
-                {
-                    await ReplyConfirmLocalized("shutting_down").ConfigureAwait(false);
-                }
-                catch
-                {
-                    // ignored
-                }
+                try { await Context.Channel.SendConfirmAsync("ℹ️ **Shutting down.**").ConfigureAwait(false); } catch (Exception ex) { _log.Warn(ex); }
                 await Task.Delay(2000).ConfigureAwait(false);
                 Environment.Exit(0);
             }
@@ -187,7 +60,7 @@ namespace NadekoBot.Modules.Administration
 
                 await NadekoBot.Client.CurrentUser.ModifyAsync(u => u.Username = newName).ConfigureAwait(false);
 
-                await ReplyConfirmLocalized("bot_name", Format.Bold(newName)).ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync($"Bot name changed to **{newName}**").ConfigureAwait(false);
             }
 
             [NadekoCommand, Usage, Description, Aliases]
@@ -196,7 +69,7 @@ namespace NadekoBot.Modules.Administration
             {
                 await NadekoBot.Client.SetStatusAsync(SettableUserStatusToUserStatus(status)).ConfigureAwait(false);
 
-                await ReplyConfirmLocalized("bot_status", Format.Bold(status.ToString())).ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync($"Bot status changed to **{status}**").ConfigureAwait(false);
             }
 
             [NadekoCommand, Usage, Description, Aliases]
@@ -218,7 +91,7 @@ namespace NadekoBot.Modules.Administration
                     }
                 }
 
-                await ReplyConfirmLocalized("set_avatar").ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync("🆒 **New avatar set.**").ConfigureAwait(false);
             }
 
             [NadekoCommand, Usage, Description, Aliases]
@@ -227,7 +100,7 @@ namespace NadekoBot.Modules.Administration
             {
                 await NadekoBot.Client.SetGameAsync(game).ConfigureAwait(false);
 
-                await ReplyConfirmLocalized("set_game").ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync("👾 **New game set.**").ConfigureAwait(false);
             }
 
             [NadekoCommand, Usage, Description, Aliases]
@@ -238,7 +111,7 @@ namespace NadekoBot.Modules.Administration
 
                 await NadekoBot.Client.SetGameAsync(name, url, StreamType.Twitch).ConfigureAwait(false);
 
-                await ReplyConfirmLocalized("set_stream").ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync("ℹ️ **New stream set.**").ConfigureAwait(false);
             }
 
             [NadekoCommand, Usage, Description, Aliases]
@@ -252,7 +125,7 @@ namespace NadekoBot.Modules.Administration
                 if (ids.Length != 2)
                     return;
                 var sid = ulong.Parse(ids[0]);
-                var server = NadekoBot.Client.GetGuilds().FirstOrDefault(s => s.Id == sid);
+                var server = NadekoBot.Client.Guilds.Where(s => s.Id == sid).FirstOrDefault();
 
                 if (server == null)
                     return;
@@ -260,7 +133,7 @@ namespace NadekoBot.Modules.Administration
                 if (ids[1].ToUpperInvariant().StartsWith("C:"))
                 {
                     var cid = ulong.Parse(ids[1].Substring(2));
-                    var ch = server.TextChannels.FirstOrDefault(c => c.Id == cid);
+                    var ch = server.TextChannels.Where(c => c.Id == cid).FirstOrDefault();
                     if (ch == null)
                     {
                         return;
@@ -270,7 +143,7 @@ namespace NadekoBot.Modules.Administration
                 else if (ids[1].ToUpperInvariant().StartsWith("U:"))
                 {
                     var uid = ulong.Parse(ids[1].Substring(2));
-                    var user = server.Users.FirstOrDefault(u => u.Id == uid);
+                    var user = server.Users.Where(u => u.Id == uid).FirstOrDefault();
                     if (user == null)
                     {
                         return;
@@ -279,10 +152,8 @@ namespace NadekoBot.Modules.Administration
                 }
                 else
                 {
-                    await ReplyErrorLocalized("invalid_format").ConfigureAwait(false);
-                    return;
+                    await Context.Channel.SendErrorAsync("⚠️ Invalid format.").ConfigureAwait(false);
                 }
-                await ReplyConfirmLocalized("message_sent").ConfigureAwait(false);
             }
 
             [NadekoCommand, Usage, Description, Aliases]
@@ -292,18 +163,24 @@ namespace NadekoBot.Modules.Administration
                 var channels = NadekoBot.Client.GetGuilds().Select(g => g.DefaultChannel).ToArray();
                 if (channels == null)
                     return;
-                await Task.WhenAll(channels.Where(c => c != null).Select(c => c.SendConfirmAsync(GetText("message_from_bo", Context.User.ToString()), message)))
+                await Task.WhenAll(channels.Where(c => c != null).Select(c => c.SendConfirmAsync($"🆕 Message from {Context.User} `[Bot Owner]`:", message)))
                         .ConfigureAwait(false);
 
-                await ReplyConfirmLocalized("message_sent").ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync("🆗").ConfigureAwait(false);
             }
 
             [NadekoCommand, Usage, Description, Aliases]
             [OwnerOnly]
             public async Task ReloadImages()
             {
-                var time = await NadekoBot.Images.Reload().ConfigureAwait(false);
-                await ReplyConfirmLocalized("images_loaded", time.TotalSeconds.ToString("F3")).ConfigureAwait(false);
+                var msg = await Context.Channel.SendMessageAsync("Reloading Images...").ConfigureAwait(false);
+                var sw = Stopwatch.StartNew();
+                await NadekoBot.Images.Reload().ConfigureAwait(false);
+                sw.Stop();
+                await msg.ModifyAsync(x =>
+                {
+                    x.Content = "✅ Images reloaded.";
+                }).ConfigureAwait(false);
             }
 
             private static UserStatus SettableUserStatusToUserStatus(SettableUserStatus sus)

@@ -5,5 +5,6 @@ namespace NadekoBot.Services
     public interface IStatsService
     {
         Task<string> Print();
+        Task Reset();
     }
 }

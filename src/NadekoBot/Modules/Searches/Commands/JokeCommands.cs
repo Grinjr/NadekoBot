@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NLog;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -17,11 +18,11 @@ namespace NadekoBot.Modules.Searches
     public partial class Searches
     {
         [Group]
-        public class JokeCommands : NadekoSubmodule
+        public class JokeCommands : ModuleBase
         {
             private static List<WoWJoke> wowJokes { get; } = new List<WoWJoke>();
             private static List<MagicItem> magicItems { get; } = new List<MagicItem>();
-            private new static readonly Logger _log;
+            private static Logger _log { get; }
 
             static JokeCommands()
             {
@@ -77,7 +78,7 @@ namespace NadekoBot.Modules.Searches
             {
                 if (!wowJokes.Any())
                 {
-                    await ReplyErrorLocalized("jokes_not_loaded").ConfigureAwait(false);
+                    await Context.Channel.SendErrorAsync("Jokes not loaded.").ConfigureAwait(false);
                     return;
                 }
                 var joke = wowJokes[new NadekoRandom().Next(0, wowJokes.Count)];
@@ -89,7 +90,7 @@ namespace NadekoBot.Modules.Searches
             {
                 if (!wowJokes.Any())
                 {
-                    await ReplyErrorLocalized("magicitems_not_loaded").ConfigureAwait(false);
+                    await Context.Channel.SendErrorAsync("MagicItems not loaded.").ConfigureAwait(false);
                     return;
                 }
                 var item = magicItems[new NadekoRandom().Next(0, magicItems.Count)];

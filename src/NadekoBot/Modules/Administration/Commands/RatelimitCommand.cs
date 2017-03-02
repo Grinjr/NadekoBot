@@ -13,10 +13,10 @@ namespace NadekoBot.Modules.Administration
     public partial class Administration
     {
         [Group]
-        public class RatelimitCommand : NadekoSubmodule
+        public class RatelimitCommand : ModuleBase
         {
             public static ConcurrentDictionary<ulong, Ratelimiter> RatelimitingChannels = new ConcurrentDictionary<ulong, Ratelimiter>();
-            private new static readonly Logger _log;
+            private static Logger _log { get; }
 
             public class Ratelimiter
             {
@@ -37,22 +37,26 @@ namespace NadekoBot.Modules.Administration
 
                 public bool CheckUserRatelimit(ulong id)
                 {
-                    var usr = Users.GetOrAdd(id, (key) => new RatelimitedUser() { UserId = id });
+                    RatelimitedUser usr = Users.GetOrAdd(id, (key) => new RatelimitedUser() { UserId = id });
                     if (usr.MessageCount == MaxMessages)
                     {
                         return true;
                     }
-                    usr.MessageCount++;
-                    var _ = Task.Run(async () =>
+                    else
                     {
-                        try
+                        usr.MessageCount++;
+                        var t = Task.Run(async () =>
                         {
-                            await Task.Delay(PerSeconds * 1000, cancelSource.Token);
-                        }
-                        catch (OperationCanceledException) { }
-                        usr.MessageCount--;
-                    });
-                    return false;
+                            try
+                            {
+                                await Task.Delay(PerSeconds * 1000, cancelSource.Token);
+                            }
+                            catch (OperationCanceledException) { }
+                            usr.MessageCount--;
+                        });
+                        return false;
+                    }
+
                 }
             }
 
@@ -65,7 +69,9 @@ namespace NadekoBot.Modules.Administration
                      try
                      {
                          var usrMsg = umsg as IUserMessage;
-                         var channel = usrMsg?.Channel as ITextChannel;
+                         if (usrMsg == null)
+                             return;
+                         var channel = usrMsg.Channel as ITextChannel;
 
                          if (channel == null || usrMsg.IsAuthor())
                              return;
@@ -89,7 +95,8 @@ namespace NadekoBot.Modules.Administration
                 if (RatelimitingChannels.TryRemove(Context.Channel.Id, out throwaway))
                 {
                     throwaway.cancelSource.Cancel();
-                    await ReplyConfirmLocalized("slowmode_disabled").ConfigureAwait(false);
+                    await Context.Channel.SendConfirmAsync("ℹ️ Slow mode disabled.").ConfigureAwait(false);
+                    return;
                 }
             }
 
@@ -102,7 +109,7 @@ namespace NadekoBot.Modules.Administration
                 
                 if (msg < 1 || perSec < 1 || msg > 100 || perSec > 3600)
                 {
-                    await ReplyErrorLocalized("invalid_params").ConfigureAwait(false);
+                    await Context.Channel.SendErrorAsync("⚠️ Invalid parameters.");
                     return;
                 }
                 var toAdd = new Ratelimiter()
@@ -113,8 +120,8 @@ namespace NadekoBot.Modules.Administration
                 };
                 if(RatelimitingChannels.TryAdd(Context.Channel.Id, toAdd))
                 {
-                    await Context.Channel.SendConfirmAsync(GetText("slowmode_init"),
-                            GetText("slowmode_desc", Format.Bold(toAdd.MaxMessages.ToString()), Format.Bold(toAdd.PerSeconds.ToString())))
+                    await Context.Channel.SendConfirmAsync("Slow mode initiated",
+                                                $"Users can't send more than `{toAdd.MaxMessages} message(s)` every `{toAdd.PerSeconds} second(s)`.")
                                                 .ConfigureAwait(false);
                 }
             }

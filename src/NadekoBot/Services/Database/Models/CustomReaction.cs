@@ -12,6 +12,7 @@ namespace NadekoBot.Services.Database.Models
         public string Trigger { get; set; }
         public bool IsRegex { get; set; }
         public bool OwnerOnly { get; set; }
+        public override string ToString() => $"`#{Id}`  `Trigger:` {Trigger}\n `Response:` {Response}";
     }
 
     public class ReactionResponse : DbEntity

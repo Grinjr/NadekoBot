@@ -6,14 +6,12 @@ using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using NLog;
 using VideoLibrary;
 
 namespace NadekoBot.Modules.Music.Classes
 {
     public static class SongHandler
     {
-        private static readonly Logger _log = LogManager.GetCurrentClassLogger();
         public static async Task<Song> ResolveSong(string query, MusicType musicType = MusicType.Normal)
         {
             if (string.IsNullOrWhiteSpace(query))
@@ -108,8 +106,7 @@ namespace NadekoBot.Modules.Music.Classes
             }
             catch (Exception ex)
             {
-                _log.Warn($"Failed resolving the link.{ex.Message}");
-                _log.Warn(ex);
+                Console.WriteLine($"Failed resolving the link.{ex.Message}");
                 return null;
             }
         }
@@ -140,7 +137,7 @@ namespace NadekoBot.Modules.Music.Classes
                 }
                 catch
                 {
-                    _log.Warn($"Failed reading .pls:\n{file}");
+                    Console.WriteLine($"Failed reading .pls:\n{file}");
                     return null;
                 }
             }
@@ -159,7 +156,7 @@ namespace NadekoBot.Modules.Music.Classes
                 }
                 catch
                 {
-                    _log.Warn($"Failed reading .m3u:\n{file}");
+                    Console.WriteLine($"Failed reading .m3u:\n{file}");
                     return null;
                 }
 
@@ -175,7 +172,7 @@ namespace NadekoBot.Modules.Music.Classes
                 }
                 catch
                 {
-                    _log.Warn($"Failed reading .asx:\n{file}");
+                    Console.WriteLine($"Failed reading .asx:\n{file}");
                     return null;
                 }
             }
@@ -195,7 +192,7 @@ namespace NadekoBot.Modules.Music.Classes
                 }
                 catch
                 {
-                    _log.Warn($"Failed reading .xspf:\n{file}");
+                    Console.WriteLine($"Failed reading .xspf:\n{file}");
                     return null;
                 }
             }

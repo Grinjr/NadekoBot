@@ -11,18 +11,24 @@ using NadekoBot.Services.Database.Models;
 using System.Linq;
 using NadekoBot.Extensions;
 using System.Threading;
+using System.Diagnostics;
+using NLog;
 
 namespace NadekoBot.Modules.ClashOfClans
 {
     [NadekoModule("ClashOfClans", ",")]
-    public class ClashOfClans : NadekoTopLevelModule
+    public class ClashOfClans : DiscordModule
     {
-        public static ConcurrentDictionary<ulong, List<ClashWar>> ClashWars { get; set; }
+        public static ConcurrentDictionary<ulong, List<ClashWar>> ClashWars { get; set; } = new ConcurrentDictionary<ulong, List<ClashWar>>();
 
         private static Timer checkWarTimer { get; }
 
+        private static new readonly Logger _log;
+
         static ClashOfClans()
         {
+            _log = LogManager.GetCurrentClassLogger();
+            var sw = Stopwatch.StartNew();
             using (var uow = DbHandler.UnitOfWork())
             {
                 ClashWars = new ConcurrentDictionary<ulong, List<ClashWar>>(
@@ -67,11 +73,7 @@ namespace NadekoBot.Modules.ClashOfClans
                     try
                     {
                         SaveWar(war);
-                        await war.Channel.SendErrorAsync(GetTextStatic("claim_expired", 
-                                    NadekoBot.Localization.GetCultureInfo(war.Channel.GuildId), 
-                                    typeof(ClashOfClans).Name.ToLowerInvariant(), 
-                                    Format.Bold(Bases[i].CallUser), 
-                                    war.ShortPrint()));
+                        await war.Channel.SendErrorAsync($"❗🔰**Claim from @{Bases[i].CallUser} for a war against {war.ShortPrint()} has expired.**").ConfigureAwait(false);
                     }
                     catch { }
                 }
@@ -80,15 +82,17 @@ namespace NadekoBot.Modules.ClashOfClans
 
         [NadekoCommand, Usage, Description, Aliases]
         [RequireContext(ContextType.Guild)]
-        [RequireUserPermission(GuildPermission.ManageMessages)]
         public async Task CreateWar(int size, [Remainder] string enemyClan = null)
         {
+            if (!(Context.User as IGuildUser).GuildPermissions.ManageChannels)
+                return;
+
             if (string.IsNullOrWhiteSpace(enemyClan))
                 return;
 
             if (size < 10 || size > 50 || size % 5 != 0)
             {
-                await ReplyErrorLocalized("invalid_size").ConfigureAwait(false);
+                await Context.Channel.SendErrorAsync("🔰 Not a Valid war size").ConfigureAwait(false);
                 return;
             }
             List<ClashWar> wars;
@@ -103,7 +107,7 @@ namespace NadekoBot.Modules.ClashOfClans
             var cw = await CreateWar(enemyClan, size, Context.Guild.Id, Context.Channel.Id);
 
             wars.Add(cw);
-            await ReplyErrorLocalized("war_created", cw.ShortPrint()).ConfigureAwait(false);
+            await Context.Channel.SendConfirmAsync($"❗🔰**CREATED CLAN WAR AGAINST {cw.ShortPrint()}**").ConfigureAwait(false);
         }
 
         [NadekoCommand, Usage, Description, Aliases]
@@ -116,18 +120,18 @@ namespace NadekoBot.Modules.ClashOfClans
             var warsInfo = GetWarInfo(Context.Guild, num);
             if (warsInfo == null)
             {
-                await ReplyErrorLocalized("war_not_exist").ConfigureAwait(false);
+                await Context.Channel.SendErrorAsync("🔰 **That war does not exist.**").ConfigureAwait(false);
                 return;
             }
             var war = warsInfo.Item1[warsInfo.Item2];
             try
             {
                 war.Start();
-                await ReplyConfirmLocalized("war_started", war.ShortPrint()).ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync($"🔰**STARTED WAR AGAINST {war.ShortPrint()}**").ConfigureAwait(false);
             }
             catch
             {
-                await ReplyErrorLocalized("war_already_started", war.ShortPrint()).ConfigureAwait(false);
+                await Context.Channel.SendErrorAsync($"🔰**WAR AGAINST {war.ShortPrint()} HAS ALREADY STARTED**").ConfigureAwait(false);
             }
             SaveWar(war);
         }
@@ -145,20 +149,22 @@ namespace NadekoBot.Modules.ClashOfClans
                 ClashWars.TryGetValue(Context.Guild.Id, out wars);
                 if (wars == null || wars.Count == 0)
                 {
-                    await ReplyErrorLocalized("no_active_wars").ConfigureAwait(false);
+                    await Context.Channel.SendErrorAsync("🔰 **No active wars.**").ConfigureAwait(false);
                     return;
                 }
 
                 var sb = new StringBuilder();
+                sb.AppendLine("🔰 **LIST OF ACTIVE WARS**");
                 sb.AppendLine("**-------------------------**");
                 for (var i = 0; i < wars.Count; i++)
                 {
-                    sb.AppendLine($"**#{i + 1}.**  `{GetText("enemy")}:` **{wars[i].EnemyClan}**");
-                    sb.AppendLine($"\t\t`{GetText("size")}:` **{wars[i].Size} v {wars[i].Size}**");
+                    sb.AppendLine($"**#{i + 1}.**  `Enemy:` **{wars[i].EnemyClan}**");
+                    sb.AppendLine($"\t\t`Size:` **{wars[i].Size} v {wars[i].Size}**");
                     sb.AppendLine("**-------------------------**");
                 }
-                await Context.Channel.SendConfirmAsync(GetText("list_active_wars"), sb.ToString()).ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync(sb.ToString()).ConfigureAwait(false);
                 return;
+
             }
             var num = 0;
             int.TryParse(number, out num);
@@ -166,11 +172,10 @@ namespace NadekoBot.Modules.ClashOfClans
             var warsInfo = GetWarInfo(Context.Guild, num);
             if (warsInfo == null)
             {
-                await ReplyErrorLocalized("war_not_exist").ConfigureAwait(false);
+                await Context.Channel.SendErrorAsync("🔰 **That war does not exist.**").ConfigureAwait(false);
                 return;
             }
-            var war = warsInfo.Item1[warsInfo.Item2];
-            await Context.Channel.SendConfirmAsync(war.Localize("info_about_war", $"`{war.EnemyClan}` ({war.Size} v {war.Size})"), war.ToPrettyString()).ConfigureAwait(false);
+            await Context.Channel.SendConfirmAsync(warsInfo.Item1[warsInfo.Item2].ToPrettyString()).ConfigureAwait(false);
         }
 
         [NadekoCommand, Usage, Description, Aliases]
@@ -180,7 +185,7 @@ namespace NadekoBot.Modules.ClashOfClans
             var warsInfo = GetWarInfo(Context.Guild, number);
             if (warsInfo == null || warsInfo.Item1.Count == 0)
             {
-                await ReplyErrorLocalized("war_not_exist").ConfigureAwait(false);
+                await Context.Channel.SendErrorAsync("🔰 **That war does not exist.**").ConfigureAwait(false);
                 return;
             }
             var usr =
@@ -192,11 +197,11 @@ namespace NadekoBot.Modules.ClashOfClans
                 var war = warsInfo.Item1[warsInfo.Item2];
                 war.Call(usr, baseNumber - 1);
                 SaveWar(war);
-                await ConfirmLocalized("claimed_base", Format.Bold(usr.ToString()), baseNumber, war.ShortPrint()).ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync($"🔰**{usr}** claimed a base #{baseNumber} for a war against {war.ShortPrint()}").ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                await Context.Channel.SendErrorAsync(ex.Message).ConfigureAwait(false);
+                await Context.Channel.SendErrorAsync($"🔰 {ex.Message}").ConfigureAwait(false);
             }
         }
 
@@ -228,14 +233,15 @@ namespace NadekoBot.Modules.ClashOfClans
             var warsInfo = GetWarInfo(Context.Guild, number);
             if (warsInfo == null)
             {
-                await ReplyErrorLocalized("war_not_exist").ConfigureAwait(false);
+                await Context.Channel.SendErrorAsync("🔰 That war does not exist.").ConfigureAwait(false);
                 return;
             }
             var war = warsInfo.Item1[warsInfo.Item2];
             war.End();
             SaveWar(war);
-            await ReplyConfirmLocalized("war_ended", warsInfo.Item1[warsInfo.Item2].ShortPrint()).ConfigureAwait(false);
+            await Context.Channel.SendConfirmAsync($"❗🔰**War against {warsInfo.Item1[warsInfo.Item2].ShortPrint()} ended.**").ConfigureAwait(false);
 
+            var size = warsInfo.Item1[warsInfo.Item2].Size;
             warsInfo.Item1.RemoveAt(warsInfo.Item2);
         }
 
@@ -246,7 +252,7 @@ namespace NadekoBot.Modules.ClashOfClans
             var warsInfo = GetWarInfo(Context.Guild, number);
             if (warsInfo == null || warsInfo.Item1.Count == 0)
             {
-                await ReplyErrorLocalized("war_not_exist").ConfigureAwait(false);
+                await Context.Channel.SendErrorAsync("🔰 **That war does not exist.**").ConfigureAwait(false);
                 return;
             }
             var usr =
@@ -258,11 +264,11 @@ namespace NadekoBot.Modules.ClashOfClans
                 var war = warsInfo.Item1[warsInfo.Item2];
                 var baseNumber = war.Uncall(usr);
                 SaveWar(war);
-                await ReplyConfirmLocalized("base_unclaimed", usr, baseNumber + 1, war.ShortPrint()).ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync($"🔰 @{usr} has **UNCLAIMED** a base #{baseNumber + 1} from a war against {war.ShortPrint()}").ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                await Context.Channel.SendErrorAsync(ex.Message).ConfigureAwait(false);
+                await Context.Channel.SendErrorAsync($"🔰 {ex.Message}").ConfigureAwait(false);
             }
         }
 
@@ -271,7 +277,7 @@ namespace NadekoBot.Modules.ClashOfClans
             var warInfo = GetWarInfo(Context.Guild, number);
             if (warInfo == null || warInfo.Item1.Count == 0)
             {
-                await ReplyErrorLocalized("war_not_exist").ConfigureAwait(false);
+                await Context.Channel.SendErrorAsync("🔰 **That war does not exist.**").ConfigureAwait(false);
                 return;
             }
             var war = warInfo.Item1[warInfo.Item2];
@@ -286,7 +292,7 @@ namespace NadekoBot.Modules.ClashOfClans
                 {
                     war.FinishClaim(baseNumber, stars);
                 }
-                await ReplyConfirmLocalized("base_destroyed", baseNumber +1, war.ShortPrint()).ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync($"❗🔰{Context.User.Mention} **DESTROYED** a base #{baseNumber + 1} in a war against {war.ShortPrint()}").ConfigureAwait(false);
             }
             catch (Exception ex)
             {

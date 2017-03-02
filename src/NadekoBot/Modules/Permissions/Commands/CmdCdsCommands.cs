@@ -21,15 +21,15 @@ namespace NadekoBot.Modules.Permissions
         }
 
         [Group]
-        public class CmdCdsCommands : NadekoSubmodule
+        public class CmdCdsCommands : ModuleBase
         {
-            public static ConcurrentDictionary<ulong, ConcurrentHashSet<CommandCooldown>> CommandCooldowns { get; }
+            public static ConcurrentDictionary<ulong, ConcurrentHashSet<CommandCooldown>> commandCooldowns { get; }
             private static ConcurrentDictionary<ulong, ConcurrentHashSet<ActiveCooldown>> activeCooldowns { get; } = new ConcurrentDictionary<ulong, ConcurrentHashSet<ActiveCooldown>>();
 
             static CmdCdsCommands()
             {
                 var configs = NadekoBot.AllGuildConfigs;
-                CommandCooldowns = new ConcurrentDictionary<ulong, ConcurrentHashSet<CommandCooldown>>(configs.ToDictionary(k => k.GuildId, v => new ConcurrentHashSet<CommandCooldown>(v.CommandCooldowns)));
+                commandCooldowns = new ConcurrentDictionary<ulong, ConcurrentHashSet<CommandCooldown>>(configs.ToDictionary(k => k.GuildId, v => new ConcurrentHashSet<CommandCooldown>(v.CommandCooldowns)));
             }
             [NadekoCommand, Usage, Description, Aliases]
             [RequireContext(ContextType.Guild)]
@@ -38,14 +38,14 @@ namespace NadekoBot.Modules.Permissions
                 var channel = (ITextChannel)Context.Channel;
                 if (secs < 0 || secs > 3600)
                 {
-                    await ReplyErrorLocalized("invalid_second_param_between", 0, 3600).ConfigureAwait(false);
+                    await channel.SendErrorAsync("Invalid second parameter. (Must be a number between 0 and 3600)").ConfigureAwait(false);
                     return;
                 }
 
                 using (var uow = DbHandler.UnitOfWork())
                 {
                     var config = uow.GuildConfigs.For(channel.Guild.Id, set => set.Include(gc => gc.CommandCooldowns));
-                    var localSet = CommandCooldowns.GetOrAdd(channel.Guild.Id, new ConcurrentHashSet<CommandCooldown>());
+                    var localSet = commandCooldowns.GetOrAdd(channel.Guild.Id, new ConcurrentHashSet<CommandCooldown>());
 
                     config.CommandCooldowns.RemoveWhere(cc => cc.CommandName == command.Aliases.First().ToLowerInvariant());
                     localSet.RemoveWhere(cc => cc.CommandName == command.Aliases.First().ToLowerInvariant());
@@ -65,14 +65,13 @@ namespace NadekoBot.Modules.Permissions
                 {
                     var activeCds = activeCooldowns.GetOrAdd(channel.Guild.Id, new ConcurrentHashSet<ActiveCooldown>());
                     activeCds.RemoveWhere(ac => ac.Command == command.Aliases.First().ToLowerInvariant());
-                    await ReplyConfirmLocalized("cmdcd_cleared", 
-                        Format.Bold(command.Aliases.First())).ConfigureAwait(false);
+                    await channel.SendConfirmAsync($"🚮 Command **{command.Aliases.First()}** has no coooldown now and all existing cooldowns have been cleared.")
+                                 .ConfigureAwait(false);
                 }
                 else
                 {
-                    await ReplyConfirmLocalized("cmdcd_add", 
-                        Format.Bold(command.Aliases.First()), 
-                        Format.Bold(secs.ToString())).ConfigureAwait(false);
+                    await channel.SendConfirmAsync($"✅ Command **{command.Aliases.First()}** now has a **{secs} {"seconds".SnPl(secs)}** cooldown.")
+                                 .ConfigureAwait(false);
                 }
             }
 
@@ -81,19 +80,19 @@ namespace NadekoBot.Modules.Permissions
             public async Task AllCmdCooldowns()
             {
                 var channel = (ITextChannel)Context.Channel;
-                var localSet = CommandCooldowns.GetOrAdd(channel.Guild.Id, new ConcurrentHashSet<CommandCooldown>());
+                var localSet = commandCooldowns.GetOrAdd(channel.Guild.Id, new ConcurrentHashSet<CommandCooldown>());
 
                 if (!localSet.Any())
-                    await ReplyConfirmLocalized("cmdcd_none").ConfigureAwait(false);
+                    await channel.SendConfirmAsync("ℹ️ `No command cooldowns set.`").ConfigureAwait(false);
                 else
-                    await channel.SendTableAsync("", localSet.Select(c => c.CommandName + ": " + c.Seconds + GetText("sec")), s => $"{s,-30}", 2).ConfigureAwait(false);
+                    await channel.SendTableAsync("", localSet.Select(c => c.CommandName + ": " + c.Seconds + " secs"), s => $"{s,-30}", 2).ConfigureAwait(false);
             }
 
             public static bool HasCooldown(CommandInfo cmd, IGuild guild, IUser user)
             {
                 if (guild == null)
                     return false;
-                var cmdcds = CmdCdsCommands.CommandCooldowns.GetOrAdd(guild.Id, new ConcurrentHashSet<CommandCooldown>());
+                var cmdcds = CmdCdsCommands.commandCooldowns.GetOrAdd(guild.Id, new ConcurrentHashSet<CommandCooldown>());
                 CommandCooldown cdRule;
                 if ((cdRule = cmdcds.FirstOrDefault(cc => cc.CommandName == cmd.Aliases.First().ToLowerInvariant())) != null)
                 {
@@ -102,23 +101,23 @@ namespace NadekoBot.Modules.Permissions
                     {
                         return true;
                     }
-                    activeCdsForGuild.Add(new ActiveCooldown()
+                    else
                     {
-                        UserId = user.Id,
-                        Command = cmd.Aliases.First().ToLowerInvariant(),
-                    });
-                    var _ = Task.Run(async () =>
-                    {
-                        try
+                        activeCdsForGuild.Add(new ActiveCooldown()
                         {
-                            await Task.Delay(cdRule.Seconds * 1000);
-                            activeCdsForGuild.RemoveWhere(ac => ac.Command == cmd.Aliases.First().ToLowerInvariant() && ac.UserId == user.Id);
-                        }
-                        catch
+                            UserId = user.Id,
+                            Command = cmd.Aliases.First().ToLowerInvariant(),
+                        });
+                        var t = Task.Run(async () =>
                         {
-                            // ignored
-                        }
-                    });
+                            try
+                            {
+                                await Task.Delay(cdRule.Seconds * 1000);
+                                activeCdsForGuild.RemoveWhere(ac => ac.Command == cmd.Aliases.First().ToLowerInvariant() && ac.UserId == user.Id);
+                            }
+                            catch { }
+                        });
+                    }
                 }
                 return false;
             }

@@ -8,14 +8,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using NadekoBot.DataStructures;
 
 namespace NadekoBot.Modules.Utility
 {
     public partial class Utility
     {
         [Group]
-        public class QuoteCommands : NadekoSubmodule
+        public class QuoteCommands : ModuleBase
         {
             [NadekoCommand, Usage, Description, Aliases]
             [RequireContext(ContextType.Guild)]
@@ -33,11 +32,10 @@ namespace NadekoBot.Modules.Utility
                 }
 
                 if (quotes.Any())
-                    await Context.Channel.SendConfirmAsync(GetText("quotes_page", page + 1), 
-                            string.Join("\n", quotes.Select(q => $"{q.Keyword,-20} by {q.AuthorName}")))
+                    await Context.Channel.SendConfirmAsync($"💬 **Page {page + 1} of quotes:**\n```xl\n" + String.Join("\n", quotes.Select((q) => $"{q.Keyword,-20} by {q.AuthorName}")) + "\n```")
                                  .ConfigureAwait(false);
                 else
-                    await ReplyErrorLocalized("quotes_page_none").ConfigureAwait(false);
+                    await Context.Channel.SendErrorAsync("No quotes on this page.").ConfigureAwait(false);
             }
 
             [NadekoCommand, Usage, Description, Aliases]
@@ -58,39 +56,7 @@ namespace NadekoBot.Modules.Utility
                 if (quote == null)
                     return;
 
-                CREmbed crembed;
-                if (CREmbed.TryParse(quote.Text, out crembed))
-                {
-                    try { await Context.Channel.EmbedAsync(crembed.ToEmbed(), crembed.PlainText ?? "").ConfigureAwait(false); }
-                    catch (Exception ex)
-                    {
-                        _log.Warn("Sending CREmbed failed");
-                        _log.Warn(ex);
-                    }
-                    return;
-                }
                 await Context.Channel.SendMessageAsync("📣 " + quote.Text.SanitizeMentions());
-            }
-            
-           [NadekoCommand, Usage, Description, Aliases]
-        [RequireContext(ContextType.Guild)] 
-            public async Task SearchQuote(string keyword, [Remainder] string text)
-            {
-            if (string.IsNullOrWhiteSpace(keyword) || string.IsNullOrWhiteSpace(text))
-            return;
-
-                keyword = keyword.ToUpperInvariant();
-
-                Quote keywordquote;
-                using (var uow = DbHandler.UnitOfWork())
-               {
-                    keywordquote = await uow.Quotes.SearchQuoteKeywordTextAsync(Context.Guild.Id, keyword, text).ConfigureAwait(false);
-               }
-
-                if (keywordquote == null)
-                    return;
-
-                await Context.Channel.SendMessageAsync("💬 " + keyword + ":  " + keywordquote.Text.SanitizeMentions());
             }
 
             [NadekoCommand, Usage, Description, Aliases]
@@ -114,7 +80,7 @@ namespace NadekoBot.Modules.Utility
                     });
                     await uow.CompleteAsync().ConfigureAwait(false);
                 }
-                await ReplyConfirmLocalized("quote_added").ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync("✅ Quote added.").ConfigureAwait(false);
             }
 
             [NadekoCommand, Usage, Description, Aliases]
@@ -136,7 +102,7 @@ namespace NadekoBot.Modules.Utility
                     if (qs == null || !qs.Any())
                     {
                         sucess = false;
-                        response = GetText("quotes_remove_none");
+                        response = "No quotes found which you can remove.";
                     }
                     else
                     {
@@ -145,7 +111,7 @@ namespace NadekoBot.Modules.Utility
                         uow.Quotes.Remove(q);
                         await uow.CompleteAsync().ConfigureAwait(false);
                         sucess = true;
-                        response = GetText("quote_deleted");
+                        response = "🗑 **Deleted a random quote.**";
                     }
                 }
                 if(sucess)
@@ -173,7 +139,7 @@ namespace NadekoBot.Modules.Utility
                     await uow.CompleteAsync();
                 }
 
-                await ReplyConfirmLocalized("quotes_deleted", Format.Bold(keyword)).ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync($"🗑 **Deleted all quotes** with **{keyword}** keyword.");
             }
         }
     }

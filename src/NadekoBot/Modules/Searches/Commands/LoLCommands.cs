@@ -33,7 +33,7 @@ namespace NadekoBot.Modules.Searches
         [NadekoCommand, Usage, Description, Aliases]
         public async Task Lolban()
         {
-            const int showCount = 8;
+            var showCount = 8;
             //http://api.champion.gg/stats/champs/mostBanned?api_key=YOUR_API_TOKEN&page=1&limit=2
             try
             {
@@ -44,20 +44,19 @@ namespace NadekoBot.Modules.Searches
                                                     $"limit={showCount}")
                                                     .ConfigureAwait(false))["data"] as JArray;
                     var dataList = data.Distinct(new ChampionNameComparer()).Take(showCount).ToList();
-                    var eb = new EmbedBuilder().WithOkColor().WithTitle(Format.Underline(GetText("x_most_banned_champs",dataList.Count)));
-                    foreach (var champ in dataList)
+                    var eb = new EmbedBuilder().WithOkColor().WithTitle(Format.Underline($"{dataList.Count} most banned champions"));
+                    for (var i = 0; i < dataList.Count; i++)
                     {
-                        var champ1 = champ;
-                        eb.AddField(efb => efb.WithName(champ1["name"].ToString()).WithValue(champ1["general"]["banRate"] + "%").WithIsInline(true));
+                        var champ = dataList[i];
+                        eb.AddField(efb => efb.WithName(champ["name"].ToString()).WithValue(champ["general"]["banRate"] + "%").WithIsInline(true));
                     }
 
                     await Context.Channel.EmbedAsync(eb, Format.Italics(trashTalk[new NadekoRandom().Next(0, trashTalk.Length)])).ConfigureAwait(false);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                _log.Warn(ex);
-                await ReplyErrorLocalized("something_went_wrong").ConfigureAwait(false);
+                await Context.Channel.SendMessageAsync("Something went wrong.").ConfigureAwait(false);
             }
         }
     }

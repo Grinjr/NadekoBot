@@ -51,12 +51,12 @@ You should see these following options after using the above command:
 2. Download Stable Build
 3. Run Nadeko (Normally)
 4. Run Nadeko with Auto Restart (Run Nadeko normally before using this.)
-5. Auto-Install Prerequisites (for Ubuntu, Debian and CentOS)
+5. Auto-Install Prerequisites (for Ubuntu and Debian)
 6. Set up credentials.json (if you have downloaded the bot already)
 7. To exit
 ```
-#####Part II (Optional)
-**If** you are running NadekoBot for the first time on your system and never had any *prerequisites* installed and have Ubuntu, Debian or CentOS, Press `5` and `enter` key, then `y` when you see the following:
+#####Part II
+**If** you are running NadekoBot for the first time on your system and never had any *prerequisites* installed, Press `5` and `enter` key, then `y` when you see the following:
 ```
 Welcome to NadekoBot Auto Prerequisites Installer.
 Would you like to continue?
@@ -76,8 +76,8 @@ and then press `enter` key.
 Once Installation is completed you should see the options again.
 
 Next, check out:
-#####Part IV (Optional)
-If you prefer to skip this step and want to do it [manually](http://nadekobot.readthedocs.io/en/latest/guides/Linux%20Guide/#setting-up-sftp) or already have the `credentials.json` file, click on the link. *(Optional)*
+#####Part IV
+If you prefer to do this step [manually](http://nadekobot.readthedocs.io/en/latest/guides/Linux%20Guide/#setting-up-sftp), and skip other parts click on the link. *(Optional)*
 
 - [1. Setting up credentials.json](http://nadekobot.readthedocs.io/en/latest/guides/Linux%20Guide/#setting-up-credentialsjson)
 - [2. To Get the Google API](http://nadekobot.readthedocs.io/en/latest/guides/Windows%20Guide/#setting-up-nadekobot-for-music)
@@ -103,12 +103,26 @@ You will be asked to enter the required informations, just follow the on-screen 
 (If you want to skip any optional infos, just press `enter` key without typing/pasting anything.)		
 Once done,		
 #####Part V
-You should see the options again.	
+You should see the options again within the **`tmux` session** named `nadeko` *(remember this one)*			
 Next, press `3` to **Run Nadeko (Normally)**	
 Check in your discord server if your new bot is working properly.	
 #####Part VI
-If your bot is working properly in your server, type `.die` to **shut down the bot**, then press `7` to **exit**.
-Next, [Run your bot again with **tmux**.](http://nadekobot.readthedocs.io/en/latest/guides/Linux%20Guide/#running-nadekobot)	
+If your bot is working properly in your server, type `.die` to shut down the bot.
+
+You should be back to the options screen again on **PuTTY**, 	
+from the options choose `4` to **Run Nadeko with Auto Restart.**
+
+It will show you more options: 
+```
+1. Run Auto Restart normally without Updating.
+2. Auto Restart and Update with Dev Build (latest)
+3. Auto Restart and Update with Stable Build
+4. Exit
+```
+Choose anything you like and once the bot's back online again in your server, close the **PuTTY**.
+
+**Done**, You now have your own **NadekoBot**.		
+
 
 [Check this when you need to **restart** your **NadekoBot** anytime later along with tmux session.](http://nadekobot.readthedocs.io/en/latest/guides/Linux%20Guide/#restarting-nadeko)
 
@@ -124,19 +138,12 @@ The above command will create a new session named **nadeko** *(you can replace â
 
 - `cd ~ && bash linuxAIO.sh`
 
-**From the options,**
+From the options,
 
-Choose `3` to **Run NadekoBot normally.**		
+Choose `3` To Run the bot normally.		
 **NOTE:** With option `3` (Running Normally), if you use `.die` [command](http://nadekobot.readthedocs.io/en/latest/Commands%20List/#administration) in discord. The bot will shut down and will stay offline until you manually run it again. (best if you want to check the bot.)
 
-Choose `4` to **Run NadekoBot with Auto Restart.**	
-It will show you more options: 
-```
-1. Run Auto Restart normally without Updating.
-2. Auto Restart and Update with Dev Build (latest)
-3. Auto Restart and Update with Stable Build
-4. Exit
-```
+Choose `4` To Run the bot with Auto Restart.	
 **NOTE:** With option `4` (Running with Auto Restart), bot will auto run if you use `.die` [command](http://nadekobot.readthedocs.io/en/latest/Commands%20List/#administration) making the command `.die` to function as restart.	
 
 See how that happens:
@@ -147,7 +154,7 @@ See how that happens:
 
 **Now check your Discord, the bot should be online**
 
-Next to **move the bot to background** and to do that, press **CTRL+B+D** (that will detach the nadeko session using TMUX) and you can finally close **PuTTY** if you want.
+Next to **move the bot to background** and to do that, press **CTRL+B+D** (this will detach the nadeko session using TMUX), and you can finally close PuTTY now.
 
 ####Restarting Nadeko
 

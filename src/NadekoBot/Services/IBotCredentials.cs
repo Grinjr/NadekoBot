@@ -1,6 +1,4 @@
 ﻿using Discord;
-using System.Collections.Generic;
-using System.Collections.Immutable;
 
 namespace NadekoBot.Services
 {
@@ -11,7 +9,7 @@ namespace NadekoBot.Services
 
         string Token { get; }
         string GoogleApiKey { get; }
-        ImmutableHashSet<ulong> OwnerIds { get; }
+        ulong[] OwnerIds { get; }
         string MashapeKey { get; }
         string LoLApiKey { get; }
 

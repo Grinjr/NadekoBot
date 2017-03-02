@@ -1,10 +1,13 @@
 ﻿using Discord;
 using Discord.Commands;
 using NadekoBot.Attributes;
+using NadekoBot.Extensions;
 using NadekoBot.Services;
+using NadekoBot.Services.Database.Models;
 using NLog;
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -13,23 +16,24 @@ namespace NadekoBot.Modules.Administration
     public partial class Administration
     {
         [Group]
-        public class AutoAssignRoleCommands : NadekoSubmodule
+        public class AutoAssignRoleCommands : ModuleBase
         {
+            private static Logger _log { get; }
             //guildid/roleid
-            private static ConcurrentDictionary<ulong, ulong> autoAssignedRoles { get; }
+            private static ConcurrentDictionary<ulong, ulong> AutoAssignedRoles { get; }
 
             static AutoAssignRoleCommands()
             {
-                var log = LogManager.GetCurrentClassLogger();
+                _log = LogManager.GetCurrentClassLogger();
 
-                autoAssignedRoles = new ConcurrentDictionary<ulong, ulong>(NadekoBot.AllGuildConfigs.Where(x => x.AutoAssignRoleId != 0)
+                AutoAssignedRoles = new ConcurrentDictionary<ulong, ulong>(NadekoBot.AllGuildConfigs.Where(x => x.AutoAssignRoleId != 0)
                     .ToDictionary(k => k.GuildId, v => v.AutoAssignRoleId));
                 NadekoBot.Client.UserJoined += async (user) =>
                 {
                     try
                     {
-                        ulong roleId;
-                        autoAssignedRoles.TryGetValue(user.Guild.Id, out roleId);
+                        ulong roleId = 0;
+                        AutoAssignedRoles.TryGetValue(user.Guild.Id, out roleId);
 
                         if (roleId == 0)
                             return;
@@ -39,7 +43,7 @@ namespace NadekoBot.Modules.Administration
                         if (role != null)
                             await user.AddRolesAsync(role).ConfigureAwait(false);
                     }
-                    catch (Exception ex) { log.Warn(ex); }
+                    catch (Exception ex) { _log.Warn(ex); }
                 };
             }
 
@@ -48,19 +52,20 @@ namespace NadekoBot.Modules.Administration
             [RequireUserPermission(GuildPermission.ManageRoles)]
             public async Task AutoAssignRole([Remainder] IRole role = null)
             {
+                GuildConfig conf;
                 using (var uow = DbHandler.UnitOfWork())
                 {
-                    var conf = uow.GuildConfigs.For(Context.Guild.Id, set => set);
+                    conf = uow.GuildConfigs.For(Context.Guild.Id, set => set);
                     if (role == null)
                     {
                         conf.AutoAssignRoleId = 0;
                         ulong throwaway;
-                        autoAssignedRoles.TryRemove(Context.Guild.Id, out throwaway);
+                        AutoAssignedRoles.TryRemove(Context.Guild.Id, out throwaway);
                     }
                     else
                     {
                         conf.AutoAssignRoleId = role.Id;
-                        autoAssignedRoles.AddOrUpdate(Context.Guild.Id, role.Id, (key, val) => role.Id);
+                        AutoAssignedRoles.AddOrUpdate(Context.Guild.Id, role.Id, (key, val) => role.Id);
                     }
 
                     await uow.CompleteAsync().ConfigureAwait(false);
@@ -68,11 +73,11 @@ namespace NadekoBot.Modules.Administration
 
                 if (role == null)
                 {
-                    await ReplyConfirmLocalized("aar_disabled").ConfigureAwait(false);
+                    await Context.Channel.SendConfirmAsync("🆗 **Auto assign role** on user join is now **disabled**.").ConfigureAwait(false);
                     return;
                 }
 
-                await ReplyConfirmLocalized("aar_enabled").ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync("✅ **Auto assign role** on user join is now **enabled**.").ConfigureAwait(false);
             }
         }
     }

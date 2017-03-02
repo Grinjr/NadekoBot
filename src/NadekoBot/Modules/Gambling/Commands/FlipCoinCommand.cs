@@ -1,10 +1,11 @@
 using Discord;
 using Discord.Commands;
+using ImageSharp;
 using NadekoBot.Attributes;
 using NadekoBot.Extensions;
 using NadekoBot.Services;
 using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using Image = ImageSharp.Image;
 
@@ -13,7 +14,7 @@ namespace NadekoBot.Modules.Gambling
     public partial class Gambling
     {
         [Group]
-        public class FlipCoinCommands : NadekoSubmodule
+        public class FlipCoinCommands : ModuleBase
         {
             private readonly IImagesService _images;
 
@@ -22,7 +23,7 @@ namespace NadekoBot.Modules.Gambling
             public FlipCoinCommands()
             {
                 //todo DI in the future, can't atm
-                _images = NadekoBot.Images;
+                this._images = NadekoBot.Images;
             }
 
             [NadekoCommand, Usage, Description, Aliases]
@@ -31,41 +32,22 @@ namespace NadekoBot.Modules.Gambling
                 if (count == 1)
                 {
                     if (rng.Next(0, 2) == 1)
-                    {
-                        using (var heads = _images.Heads.ToStream())
-                        {
-                            await Context.Channel.SendFileAsync(heads, "heads.jpg", Context.User.Mention + " " + GetText("flipped", Format.Bold(GetText("heads"))) + ".").ConfigureAwait(false);
-                        }
-                    }
+                        await Context.Channel.SendFileAsync(_images.Heads, "heads.jpg", $"{Context.User.Mention} flipped " + Format.Code("Heads") + ".").ConfigureAwait(false);
                     else
-                    {
-                        using (var tails = _images.Tails.ToStream())
-                        {
-                            await Context.Channel.SendFileAsync(tails, "tails.jpg", Context.User.Mention + " " + GetText("flipped", Format.Bold(GetText("tails"))) + ".").ConfigureAwait(false);
-                        }
-                    }
+                        await Context.Channel.SendFileAsync(_images.Tails, "tails.jpg", $"{Context.User.Mention} flipped " + Format.Code("Tails") + ".").ConfigureAwait(false);
                     return;
                 }
                 if (count > 10 || count < 1)
                 {
-                    await ReplyErrorLocalized("flip_invalid", 10).ConfigureAwait(false);
+                    await Context.Channel.SendErrorAsync("`Invalid number specified. You can flip 1 to 10 coins.`").ConfigureAwait(false);
                     return;
                 }
                 var imgs = new Image[count];
                 for (var i = 0; i < count; i++)
                 {
-                    using (var heads = _images.Heads.ToStream())
-                    using (var tails = _images.Tails.ToStream())
-                    {
-                        if (rng.Next(0, 10) < 5)
-                        {
-                            imgs[i] = new Image(heads);
-                        }
-                        else
-                        {
-                            imgs[i] = new Image(tails);
-                        }
-                    }
+                    imgs[i] = rng.Next(0, 10) < 5 ?
+                                new Image(_images.Heads) :
+                                new Image(_images.Tails);
                 }
                 await Context.Channel.SendFileAsync(imgs.Merge().ToStream(), $"{count} coins.png").ConfigureAwait(false);
             }
@@ -79,22 +61,22 @@ namespace NadekoBot.Modules.Gambling
 
                 if (amount < NadekoBot.BotConfig.MinimumBetAmount)
                 {
-                    await ReplyErrorLocalized("min_bet_limit", NadekoBot.BotConfig.MinimumBetAmount + CurrencySign).ConfigureAwait(false);
+                    await Context.Channel.SendErrorAsync($"You can't bet less than {NadekoBot.BotConfig.MinimumBetAmount}{CurrencySign}.")
+                                 .ConfigureAwait(false);
                     return;
                 }
                 var removed = await CurrencyHandler.RemoveCurrencyAsync(Context.User, "Betflip Gamble", amount, false).ConfigureAwait(false);
                 if (!removed)
                 {
-                    await ReplyErrorLocalized("not_enough", CurrencyPluralName).ConfigureAwait(false);
+                    await Context.Channel.SendErrorAsync($"{Context.User.Mention} You don't have enough {CurrencyPluralName}.").ConfigureAwait(false);
                     return;
                 }
                 //heads = true
                 //tails = false
 
-                //todo this seems stinky, no time to look at it right now
                 var isHeads = guessStr == "HEADS" || guessStr == "H";
-                var result = false;
-                IEnumerable<byte> imageToSend;
+                bool result = false;
+                Stream imageToSend;
                 if (rng.Next(0, 2) == 1)
                 {
                     imageToSend = _images.Heads;
@@ -109,17 +91,15 @@ namespace NadekoBot.Modules.Gambling
                 if (isHeads == result)
                 { 
                     var toWin = (int)Math.Round(amount * NadekoBot.BotConfig.BetflipMultiplier);
-                    str = Context.User.Mention + " " + GetText("flip_guess", toWin + CurrencySign);
+                    str = $"{Context.User.Mention}`You guessed it!` You won {toWin}{CurrencySign}";
                     await CurrencyHandler.AddCurrencyAsync(Context.User, "Betflip Gamble", toWin, false).ConfigureAwait(false);
                 }
                 else
                 {
-                    str = Context.User.Mention + " " + GetText("better_luck");
+                    str = $"{Context.User.Mention}`Better luck next time.`";
                 }
-                using (var toSend = imageToSend.ToStream())
-                {
-                    await Context.Channel.SendFileAsync(toSend, "result.png", str).ConfigureAwait(false);
-                }
+
+                await Context.Channel.SendFileAsync(imageToSend, "result.png", str).ConfigureAwait(false);
             }
         }
     }

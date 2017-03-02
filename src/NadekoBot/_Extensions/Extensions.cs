@@ -20,14 +20,7 @@ namespace NadekoBot.Extensions
     {
         private const string arrow_left = "⬅";
         private const string arrow_right = "➡";
-
-        public static Stream ToStream(this IEnumerable<byte> bytes, bool canWrite = false)
-        {
-            var ms = new MemoryStream(bytes as byte[] ?? bytes.ToArray(), canWrite);
-            ms.Seek(0, SeekOrigin.Begin);
-            return ms;
-        }
-
+        
         /// <summary>
         /// danny kamisama
         /// </summary>
@@ -402,15 +395,22 @@ namespace NadekoBot.Extensions
 
         public static ImageSharp.Image Merge(this IEnumerable<ImageSharp.Image> images)
         {
-            var imgs = images.ToArray();
+            var imgList = images.ToList();
 
-            var canvas = new ImageSharp.Image(imgs.Sum(img => img.Width), imgs.Max(img => img.Height));
+            var canvas = new ImageSharp.Image(imgList.Sum(img => img.Width), imgList.Max(img => img.Height));
 
-            var xOffset = 0;
-            for (int i = 0; i < imgs.Length; i++)
+            var canvasPixels = canvas.Lock();
+            int offsetX = 0;
+            foreach (var img in imgList.Select(img => img.Lock()))
             {
-                canvas.DrawImage(imgs[i], 100, default(Size), new Point(xOffset, 0));
-                xOffset += imgs[i].Bounds.Width;
+                for (int i = 0; i < img.Width; i++)
+                {
+                    for (int j = 0; j < img.Height; j++)
+                    {
+                        canvasPixels[i + offsetX, j] = img[i, j];
+                    }
+                }
+                offsetX += img.Width;
             }
 
             return canvas;
@@ -419,7 +419,7 @@ namespace NadekoBot.Extensions
         public static Stream ToStream(this ImageSharp.Image img)
         {
             var imageStream = new MemoryStream();
-            img.Save(imageStream);
+            img.SaveAsPng(imageStream);
             imageStream.Position = 0;
             return imageStream;
         }

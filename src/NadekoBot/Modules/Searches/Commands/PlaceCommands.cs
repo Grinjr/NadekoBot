@@ -10,9 +10,9 @@ namespace NadekoBot.Modules.Searches
     public partial class Searches
     {
         [Group]
-        public class PlaceCommands : NadekoSubmodule
+        public class PlaceCommands : ModuleBase
         {
-            private static string typesStr { get; } = string.Join(", ", Enum.GetNames(typeof(PlaceType)));
+            private static string typesStr { get; } = $"`List of \"{NadekoBot.ModulePrefixes[typeof(Searches).Name]}place\" tags:`\n" + String.Join(", ", Enum.GetNames(typeof(PlaceType)));
 
             public enum PlaceType
             {
@@ -29,15 +29,14 @@ namespace NadekoBot.Modules.Searches
             [NadekoCommand, Usage, Description, Aliases]
             public async Task Placelist()
             {
-                await Context.Channel.SendConfirmAsync(GetText("list_of_place_tags", NadekoBot.ModulePrefixes[typeof(Searches).Name]), 
-                    typesStr)
+                await Context.Channel.SendConfirmAsync(typesStr)
                              .ConfigureAwait(false);
             }
 
             [NadekoCommand, Usage, Description, Aliases]
             public async Task Place(PlaceType placeType, uint width = 0, uint height = 0)
             {
-                var url = "";
+                string url = "";
                 switch (placeType)
                 {
                     case PlaceType.Cage:

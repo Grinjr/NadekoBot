@@ -14,12 +14,8 @@ using System.Collections.Generic;
 using NadekoBot.Modules.Permissions;
 using NadekoBot.TypeReaders;
 using System.Collections.Concurrent;
-using System.Collections.Immutable;
-using System.Diagnostics;
 using NadekoBot.Modules.Music;
 using NadekoBot.Services.Database.Models;
-using System.Resources;
-using NadekoBot.Resources;
 
 namespace NadekoBot
 {
@@ -33,10 +29,7 @@ namespace NadekoBot
         public static CommandService CommandService { get; private set; }
         public static CommandHandler CommandHandler { get; private set; }
         public static DiscordShardedClient Client { get; private set; }
-        public static BotCredentials Credentials { get; }
-
-        public static Localization Localization { get; private set; }
-        public static ResourceManager ResponsesResourceManager { get; } = new ResourceManager(typeof(ResponseStrings));
+        public static BotCredentials Credentials { get; private set; }
 
         public static GoogleApiService Google { get; private set; }
         public static StatsService Stats { get; private set; }
@@ -45,7 +38,7 @@ namespace NadekoBot
         public static ConcurrentDictionary<string, string> ModulePrefixes { get; private set; }
         public static bool Ready { get; private set; }
 
-        public static ImmutableArray<GuildConfig> AllGuildConfigs { get; }
+        public static IEnumerable<GuildConfig> AllGuildConfigs { get; }
         public static BotConfig BotConfig { get; }
 
         static NadekoBot()
@@ -55,14 +48,11 @@ namespace NadekoBot
 
             using (var uow = DbHandler.UnitOfWork())
             {
-                AllGuildConfigs = uow.GuildConfigs.GetAllGuildConfigs().ToImmutableArray();
+                AllGuildConfigs = uow.GuildConfigs.GetAllGuildConfigs();
                 BotConfig = uow.BotConfig.GetOrCreate();
                 OkColor = new Color(Convert.ToUInt32(BotConfig.OkColor, 16));
                 ErrorColor = new Color(Convert.ToUInt32(BotConfig.ErrorColor, 16));
             }
-
-            //ImageSharp.Configuration.Default.AddImageFormat(new ImageSharp.Formats.PngFormat());
-            //ImageSharp.Configuration.Default.AddImageFormat(new ImageSharp.Formats.JpegFormat());
         }
 
         public async Task RunAsync(params string[] args)
@@ -80,7 +70,7 @@ namespace NadekoBot
                 TotalShards = Credentials.TotalShards,
                 ConnectionTimeout = int.MaxValue,
 #if !GLOBAL_NADEKO
-                //AlwaysDownloadUsers = true,
+                AlwaysDownloadUsers = true,
 #endif
             });
 
@@ -89,7 +79,6 @@ namespace NadekoBot
 #endif
 
             //initialize Services
-            Localization = new Localization(NadekoBot.BotConfig.Locale, NadekoBot.AllGuildConfigs.ToDictionary(x => x.GuildId, x => x.Locale));
             CommandService = new CommandService(new CommandServiceConfig() {
                 CaseSensitiveCommands = false,
                 DefaultRunMode = RunMode.Sync
@@ -113,16 +102,13 @@ namespace NadekoBot
             CommandService.AddTypeReader<ModuleInfo>(new ModuleTypeReader());
             CommandService.AddTypeReader<IGuild>(new GuildTypeReader());
 
-
-            var sw = Stopwatch.StartNew();
             //connect
             await Client.LoginAsync(TokenType.Bot, Credentials.Token).ConfigureAwait(false);
             await Client.ConnectAsync().ConfigureAwait(false);
             //await Client.DownloadAllUsersAsync().ConfigureAwait(false);
             Stats.Initialize();
 
-            sw.Stop();
-            _log.Info("Connected in " + sw.Elapsed.TotalSeconds.ToString("F2"));
+            _log.Info("Connected");
 
             //load commands and prefixes
 

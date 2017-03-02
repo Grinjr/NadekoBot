@@ -3,7 +3,9 @@ using Discord.Commands;
 using NadekoBot.Attributes;
 using NadekoBot.Extensions;
 using NadekoBot.Modules.Games.Trivia;
+using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Threading.Tasks;
 
 
@@ -12,7 +14,7 @@ namespace NadekoBot.Modules.Games
     public partial class Games
     {
         [Group]
-        public class TriviaCommands : NadekoSubmodule
+        public class TriviaCommands : ModuleBase
         {
             public static ConcurrentDictionary<ulong, TriviaGame> RunningTrivias { get; } = new ConcurrentDictionary<ulong, TriviaGame>();
 
@@ -29,7 +31,7 @@ namespace NadekoBot.Modules.Games
 
                 var showHints = !additionalArgs.Contains("nohint");
 
-                var trivia = new TriviaGame(channel.Guild, channel, showHints, winReq);
+                TriviaGame trivia = new TriviaGame(channel.Guild, channel, showHints, winReq);
                 if (RunningTrivias.TryAdd(channel.Guild.Id, trivia))
                 {
                     try
@@ -43,9 +45,8 @@ namespace NadekoBot.Modules.Games
                     }
                     return;                    
                 }
-                
-                await Context.Channel.SendErrorAsync(GetText("trivia_already_running") + "\n" + trivia.CurrentQuestion)
-                    .ConfigureAwait(false);
+                else
+                    await Context.Channel.SendErrorAsync("Trivia game is already running on this server.\n" + trivia.CurrentQuestion).ConfigureAwait(false);
             }
 
             [NadekoCommand, Usage, Description, Aliases]
@@ -57,11 +58,11 @@ namespace NadekoBot.Modules.Games
                 TriviaGame trivia;
                 if (RunningTrivias.TryGetValue(channel.Guild.Id, out trivia))
                 {
-                    await channel.SendConfirmAsync(GetText("leaderboard"), trivia.GetLeaderboard()).ConfigureAwait(false);
+                    await channel.SendConfirmAsync("Leaderboard", trivia.GetLeaderboard()).ConfigureAwait(false);
                     return;
                 }
 
-                await ReplyErrorLocalized("trivia_none").ConfigureAwait(false);
+                await channel.SendErrorAsync("No trivia is running on this server.").ConfigureAwait(false);
             }
 
             [NadekoCommand, Usage, Description, Aliases]
@@ -77,7 +78,7 @@ namespace NadekoBot.Modules.Games
                     return;
                 }
 
-                await ReplyErrorLocalized("trivia_none").ConfigureAwait(false);
+                await channel.SendErrorAsync("No trivia is running on this server.").ConfigureAwait(false);
             }
         }
     }

@@ -10,7 +10,6 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using ImageSharp.Formats;
 using Image = ImageSharp.Image;
 
 namespace NadekoBot.Modules.Gambling
@@ -18,12 +17,12 @@ namespace NadekoBot.Modules.Gambling
     public partial class Gambling
     {
         [Group]
-        public class DriceRollCommands : NadekoSubmodule
+        public class DriceRollCommands : ModuleBase
         {
             private Regex dndRegex { get; } = new Regex(@"^(?<n1>\d+)d(?<n2>\d+)(?:\+(?<add>\d+))?(?:\-(?<sub>\d+))?$", RegexOptions.Compiled);
             private Regex fudgeRegex { get; } = new Regex(@"^(?<n1>\d+)d(?:F|f)$", RegexOptions.Compiled);
 
-            private readonly char[] _fateRolls = { '-', ' ', '+' };
+            private readonly char[] fateRolls = new[] { '-', ' ', '+' };
 
             [NadekoCommand, Usage, Description, Aliases]
             public async Task Roll()
@@ -35,15 +34,17 @@ namespace NadekoBot.Modules.Gambling
                 var num2 = gen % 10;
                 var imageStream = await Task.Run(() =>
                 {
-                    var ms = new MemoryStream();
-                    new[] { GetDice(num1), GetDice(num2) }.Merge().Save(ms);
-                    ms.Position = 0;
-                    return ms;
-                }).ConfigureAwait(false);
+                    try
+                    {
+                        var ms = new MemoryStream();
+                        new[] { GetDice(num1), GetDice(num2) }.Merge().SaveAsPng(ms);
+                        ms.Position = 0;
+                        return ms;
+                    }
+                    catch { return new MemoryStream(); }
+                });
 
-                await Context.Channel.SendFileAsync(imageStream, 
-                    "dice.png", 
-                    Context.User.Mention + " " + GetText("dice_rolled", Format.Code(gen.ToString()))).ConfigureAwait(false);
+                await Context.Channel.SendFileAsync(imageStream, "dice.png", $"{Context.User.Mention} rolled " + Format.Code(gen.ToString())).ConfigureAwait(false);
             }
 
             public enum RollOrderType
@@ -81,11 +82,11 @@ namespace NadekoBot.Modules.Gambling
                 await InternallDndRoll(arg, false).ConfigureAwait(false);
             }
 
-            private async Task InternalRoll(int num, bool ordered)
+            private async Task InternalRoll( int num, bool ordered)
             {
                 if (num < 1 || num > 30)
                 {
-                    await ReplyErrorLocalized("dice_invalid_number", 1, 30).ConfigureAwait(false);
+                    await Context.Channel.SendErrorAsync("Invalid number specified. You can roll up to 1-30 dice at a time.").ConfigureAwait(false);
                     return;
                 }
 
@@ -121,14 +122,9 @@ namespace NadekoBot.Modules.Gambling
 
                 var bitmap = dice.Merge();
                 var ms = new MemoryStream();
-                bitmap.Save(ms);
+                bitmap.SaveAsPng(ms);
                 ms.Position = 0;
-                await Context.Channel.SendFileAsync(ms, "dice.png",
-                    Context.User.Mention +  " " +
-                    GetText("dice_rolled_num", Format.Bold(values.Count.ToString())) +
-                    " " + GetText("total_average",
-                        Format.Bold(values.Sum().ToString()),
-                        Format.Bold((values.Sum() / (1.0f * values.Count)).ToString("N2")))).ConfigureAwait(false);
+                await Context.Channel.SendFileAsync(ms, "dice.png", $"{Context.User.Mention} rolled {values.Count} {(values.Count == 1 ? "die" : "dice")}. Total: **{values.Sum()}** Average: **{(values.Sum() / (1.0f * values.Count)).ToString("N2")}**").ConfigureAwait(false);
             }
 
             private async Task InternallDndRoll(string arg, bool ordered)
@@ -146,9 +142,9 @@ namespace NadekoBot.Modules.Gambling
 
                     for (int i = 0; i < n1; i++)
                     {
-                        rolls.Add(_fateRolls[rng.Next(0, _fateRolls.Length)]);
+                        rolls.Add(fateRolls[rng.Next(0, fateRolls.Length)]);
                     }
-                    var embed = new EmbedBuilder().WithOkColor().WithDescription(Context.User.Mention + " " + GetText("dice_rolled_num", Format.Bold(n1.ToString())))
+                    var embed = new EmbedBuilder().WithOkColor().WithDescription($"{Context.User.Mention} rolled {n1} fate {(n1 == 1 ? "die" : "dice")}.")
                         .AddField(efb => efb.WithName(Format.Bold("Result"))
                             .WithValue(string.Join(" ", rolls.Select(c => Format.Code($"[{c}]")))));
                     await Context.Channel.EmbedAsync(embed).ConfigureAwait(false);
@@ -172,7 +168,7 @@ namespace NadekoBot.Modules.Gambling
                         }
 
                         var sum = arr.Sum();
-                        var embed = new EmbedBuilder().WithOkColor().WithDescription(Context.User.Mention + " " +GetText("dice_rolled_num", n1) + $"`1 - {n2}`")
+                        var embed = new EmbedBuilder().WithOkColor().WithDescription($"{Context.User.Mention} rolled {n1} {(n1 == 1 ? "die" : "dice")} `1 to {n2}`")
                         .AddField(efb => efb.WithName(Format.Bold("Rolls"))
                             .WithValue(string.Join(" ", (ordered ? arr.OrderBy(x => x).AsEnumerable() : arr).Select(x => Format.Code(x.ToString())))))
                         .AddField(efb => efb.WithName(Format.Bold("Sum"))
@@ -185,48 +181,48 @@ namespace NadekoBot.Modules.Gambling
             [NadekoCommand, Usage, Description, Aliases]
             public async Task NRoll([Remainder] string range)
             {
-                int rolled;
-                if (range.Contains("-"))
+                try
                 {
-                    var arr = range.Split('-')
-                        .Take(2)
-                        .Select(int.Parse)
-                        .ToArray();
-                    if (arr[0] > arr[1])
+                    int rolled;
+                    if (range.Contains("-"))
                     {
-                        await ReplyErrorLocalized("second_larger_than_first").ConfigureAwait(false);
-                        return;
+                        var arr = range.Split('-')
+                                        .Take(2)
+                                        .Select(int.Parse)
+                                        .ToArray();
+                        if (arr[0] > arr[1])
+                            throw new ArgumentException("Second argument must be larger than the first one.");
+                        rolled = new NadekoRandom().Next(arr[0], arr[1] + 1);
                     }
-                    rolled = new NadekoRandom().Next(arr[0], arr[1] + 1);
-                }
-                else
-                {
-                    rolled = new NadekoRandom().Next(0, int.Parse(range) + 1);
-                }
+                    else
+                    {
+                        rolled = new NadekoRandom().Next(0, int.Parse(range) + 1);
+                    }
 
-                await ReplyConfirmLocalized("dice_rolled", Format.Bold(rolled.ToString())).ConfigureAwait(false);
+                    await Context.Channel.SendConfirmAsync($"{Context.User.Mention} rolled **{rolled}**.").ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    await Context.Channel.SendErrorAsync($":anger: {ex.Message}").ConfigureAwait(false);
+                }
             }
 
             private Image GetDice(int num)
             {
-                if (num < 0 || num > 10)
-                    throw new ArgumentOutOfRangeException(nameof(num));
-
-                if (num == 10)
+                const string pathToImage = "data/images/dice";
+                if (num != 10)
                 {
-                    var images = NadekoBot.Images.Dice;
-                    using (var imgOneStream = images[1].Value.ToStream())
-                    using (var imgZeroStream = images[0].Value.ToStream())
-                    {
-                        Image imgOne = new Image(imgOneStream);
-                        Image imgZero = new Image(imgZeroStream);
-
-                        return new[] { imgOne, imgZero }.Merge();
-                    }
+                    using (var stream = File.OpenRead(Path.Combine(pathToImage, $"{num}.png")))
+                        return new Image(stream);
                 }
-                using (var die = NadekoBot.Images.Dice[num].Value.ToStream())
+
+                using (var one = File.OpenRead(Path.Combine(pathToImage, "1.png")))
+                using (var zero = File.OpenRead(Path.Combine(pathToImage, "0.png")))
                 {
-                    return new Image(die);
+                    Image imgOne = new Image(one);
+                    Image imgZero = new Image(zero);
+
+                    return new[] { imgOne, imgZero }.Merge();
                 }
             }
         }

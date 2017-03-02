@@ -21,11 +21,11 @@ namespace NadekoBot.Modules.Permissions
         }
 
         [Group]
-        public class BlacklistCommands : NadekoSubmodule
+        public class BlacklistCommands : ModuleBase
         {
-            public static ConcurrentHashSet<ulong> BlacklistedUsers { get; set; }
-            public static ConcurrentHashSet<ulong> BlacklistedGuilds { get; set; }
-            public static ConcurrentHashSet<ulong> BlacklistedChannels { get; set; }
+            public static ConcurrentHashSet<ulong> BlacklistedUsers { get; set; } = new ConcurrentHashSet<ulong>();
+            public static ConcurrentHashSet<ulong> BlacklistedGuilds { get; set; } = new ConcurrentHashSet<ulong>();
+            public static ConcurrentHashSet<ulong> BlacklistedChannels { get; set; } = new ConcurrentHashSet<ulong>();
 
             static BlacklistCommands()
             {
@@ -115,7 +115,7 @@ namespace NadekoBot.Modules.Permissions
                             }
                             break;
                         case BlacklistType.Channel:
-                            var item = Games.Games.TriviaCommands.RunningTrivias.FirstOrDefault(kvp => kvp.Value.Channel.Id == id);
+                            var item = Games.Games.TriviaCommands.RunningTrivias.FirstOrDefault(kvp => kvp.Value.channel.Id == id);
                             Games.Games.TriviaCommands.RunningTrivias.TryRemove(item.Key, out tg);
                             if (tg != null)
                             {
@@ -124,14 +124,16 @@ namespace NadekoBot.Modules.Permissions
                             break;
                         case BlacklistType.User:
                             break;
+                        default:
+                            break;
                     }
 
                 }
 
                 if(action == AddRemove.Add)
-                    await ReplyConfirmLocalized("blacklisted", Format.Code(type.ToString()), Format.Code(id.ToString())).ConfigureAwait(false);
+                    await Context.Channel.SendConfirmAsync($"Blacklisted a `{type}` with id `{id}`").ConfigureAwait(false);
                 else
-                    await ReplyConfirmLocalized("unblacklisted", Format.Code(type.ToString()), Format.Code(id.ToString())).ConfigureAwait(false);
+                    await Context.Channel.SendConfirmAsync($"Unblacklisted a `{type}` with id `{id}`").ConfigureAwait(false);
             }
         }
     }

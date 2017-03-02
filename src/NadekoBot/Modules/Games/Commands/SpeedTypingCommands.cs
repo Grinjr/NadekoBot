@@ -116,7 +116,7 @@ namespace NadekoBot.Modules.Games
                     if (msg == null)
                         return;
 
-                    if (this.Channel == null || this.Channel.Id != msg.Channel.Id) return;
+                    if (this.Channel == null || this.Channel.Id != this.Channel.Id) return;
 
                     var guess = msg.Content;
 
@@ -124,14 +124,13 @@ namespace NadekoBot.Modules.Games
                     var decision = Judge(distance, guess.Length);
                     if (decision && !finishedUserIds.Contains(msg.Author.Id))
                     {
-                        var elapsed = sw.Elapsed;
-                        var wpm = CurrentSentence.Length / WORD_VALUE / elapsed.TotalSeconds * 60;
+                        var wpm = CurrentSentence.Length / WORD_VALUE / sw.Elapsed.Seconds * 60;
                         finishedUserIds.Add(msg.Author.Id);
                         await this.Channel.EmbedAsync(new EmbedBuilder().WithOkColor()
-                            .WithTitle($"{msg.Author} finished the race!")
+                            .WithTitle((string)$"{msg.Author} finished the race!")
                             .AddField(efb => efb.WithName("Place").WithValue($"#{finishedUserIds.Count}").WithIsInline(true))
-                            .AddField(efb => efb.WithName("WPM").WithValue($"{wpm:F1} *[{elapsed.TotalSeconds:F2}sec]*").WithIsInline(true))
-                            .AddField(efb => efb.WithName("Errors").WithValue(distance.ToString()).WithIsInline(true)))
+                            .AddField(efb => efb.WithName("WPM").WithValue($"{wpm:F2} *[{sw.Elapsed.Seconds.ToString()}sec]*").WithIsInline(true))
+                            .AddField(efb => efb.WithName((string)"Errors").WithValue((string)distance.ToString()).WithIsInline((bool)true)))
                                 .ConfigureAwait(false);
                         if (finishedUserIds.Count % 4 == 0)
                         {
@@ -147,15 +146,15 @@ namespace NadekoBot.Modules.Games
         }
 
         [Group]
-        public class SpeedTypingCommands : NadekoSubmodule
+        public class SpeedTypingCommands : ModuleBase
         {
             public static List<TypingArticle> TypingArticles { get; } = new List<TypingArticle>();
 
-            private const string _typingArticlesPath = "data/typing_articles.json";
+            const string typingArticlesPath = "data/typing_articles.json";
 
             static SpeedTypingCommands()
             {
-                try { TypingArticles = JsonConvert.DeserializeObject<List<TypingArticle>>(File.ReadAllText(_typingArticlesPath)); } catch { }
+                try { TypingArticles = JsonConvert.DeserializeObject<List<TypingArticle>>(File.ReadAllText(typingArticlesPath)); } catch { }
             }
             public static ConcurrentDictionary<ulong, TypingGame> RunningContests = new ConcurrentDictionary<ulong, TypingGame>();
 
@@ -208,7 +207,7 @@ namespace NadekoBot.Modules.Games
                     Text = text.SanitizeMentions(),
                 });
 
-                File.WriteAllText(_typingArticlesPath, JsonConvert.SerializeObject(TypingArticles));
+                File.WriteAllText(typingArticlesPath, JsonConvert.SerializeObject(TypingArticles));
 
                 await channel.SendConfirmAsync("Added new article for typing game.").ConfigureAwait(false);
             }
@@ -222,7 +221,7 @@ namespace NadekoBot.Modules.Games
                 if (page < 1)
                     return;
 
-                var articles = TypingArticles.Skip((page - 1) * 15).Take(15).ToArray();
+                var articles = TypingArticles.Skip((page - 1) * 15).Take(15);
 
                 if (!articles.Any())
                 {
@@ -230,7 +229,7 @@ namespace NadekoBot.Modules.Games
                     return;
                 }
                 var i = (page - 1) * 15;
-                await channel.SendConfirmAsync("List of articles for Type Race", string.Join("\n", articles.Select(a => $"`#{++i}` - {a.Text.TrimTo(50)}")))
+                await channel.SendConfirmAsync("List of articles for Type Race", String.Join("\n", articles.Select(a => $"`#{++i}` - {a.Text.TrimTo(50)}")))
                              .ConfigureAwait(false);
             }
 
@@ -248,7 +247,7 @@ namespace NadekoBot.Modules.Games
                 var removed = TypingArticles[index];
                 TypingArticles.RemoveAt(index);
 
-                File.WriteAllText(_typingArticlesPath, JsonConvert.SerializeObject(TypingArticles));
+                File.WriteAllText(typingArticlesPath, JsonConvert.SerializeObject(TypingArticles));
 
                 await channel.SendConfirmAsync($"`Removed typing article:` #{index + 1} - {removed.Text.TrimTo(50)}")
                              .ConfigureAwait(false);
