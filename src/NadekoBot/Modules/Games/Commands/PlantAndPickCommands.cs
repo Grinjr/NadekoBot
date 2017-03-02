@@ -15,6 +15,9 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Linq;
+using System.Xml.Serialization;
 
 namespace NadekoBot.Modules.Games
 {
@@ -38,6 +41,10 @@ namespace NadekoBot.Modules.Games
 
             private static ConcurrentHashSet<ulong> usersRecentlyPicked { get; } = new ConcurrentHashSet<ulong>();
 
+            private static string lastMessagesFilePath = "data/lastMessages.xml";
+            private static ConcurrentDictionary<ulong, DateTime> lastMessages { get; set; } = new ConcurrentDictionary<ulong, DateTime>();
+            private static bool messageUpdate = false;
+
             private static Logger _log { get; }
 
             static PlantPickCommands()
@@ -49,6 +56,56 @@ namespace NadekoBot.Modules.Games
 #endif
                 generationChannels = new ConcurrentHashSet<ulong>(NadekoBot.AllGuildConfigs
                     .SelectMany(c => c.GenerateCurrencyChannelIds.Select(obj => obj.ChannelId)));
+
+                if (File.Exists(lastMessagesFilePath))
+                {
+                    FileStream lastMessagesFile = new FileStream(lastMessagesFilePath, FileMode.OpenOrCreate);
+                    var xElem = XElement.Load(lastMessagesFile);
+                    Dictionary<ulong, DateTime> tempDic = xElem.Descendants("item")
+                                        .ToDictionary(x => (ulong)x.Attribute("id"), x => (DateTime)x.Attribute("value"));
+
+                    foreach (KeyValuePair<ulong, DateTime> entry in tempDic)
+                    {
+                        lastMessages.AddOrUpdate(entry.Key, entry.Value, (id, old) => entry.Value);
+                    }
+                    //ConcurrentDictionary<ulong, DateTime> lastMessages = new ConcurrentDictionary<ulong, DateTime>(tempDic);
+
+                    lastMessagesFile.Dispose();
+                }
+                
+                var saveToFileTimer = new System.Threading.Timer(async (e) =>
+                {
+                    await SaveToXML();
+                }, null, 0, Convert.ToInt32(TimeSpan.FromMinutes(5).TotalMilliseconds));
+            }
+
+            public static async Task SaveToXML()
+            {
+                while (true)
+                {
+                    if (messageUpdate)
+                    {
+                        XElement xElem = new XElement(
+                                        "items",
+                                        lastMessages.Select(x => new XElement("item", new XAttribute("id", x.Key), new XAttribute("value", x.Value)))
+                                     );
+                        var xml = xElem.ToString();
+
+                        if (!File.Exists(lastMessagesFilePath))
+                        {
+                            File.WriteAllText(lastMessagesFilePath, "");
+                        }
+
+                        FileStream lastMessagesFile = new FileStream(lastMessagesFilePath, FileMode.Truncate);
+                        xElem.Save(lastMessagesFile, SaveOptions.None);
+                        lastMessagesFile.Flush();
+                        lastMessagesFile.Dispose();
+
+                        messageUpdate = false;
+                    }
+
+                    await Task.Delay(Convert.ToInt32(TimeSpan.FromMinutes(5).TotalMilliseconds));
+                }
             }
 
             private static Task PotentialFlowerGeneration(SocketMessage imsg)
@@ -60,6 +117,28 @@ namespace NadekoBot.Modules.Games
                 var channel = imsg.Channel as ITextChannel;
                 if (channel == null)
                     return Task.CompletedTask;
+
+                var dailyGen = Task.Run(async () =>
+                {
+                    try
+                    {
+                        var lastMessage = lastMessages.GetOrAdd(msg.Author.Id, DateTime.MinValue);
+                        if (DateTime.Today > lastMessage)
+                        {
+                            int awardAmount = 3;
+
+                            await CurrencyHandler.AddCurrencyAsync(msg.Author, "Daily participation", awardAmount, false).ConfigureAwait(false);
+                            await msg.Author.SendConfirmAsync("Hey! Thanks for interacting with the server today!", "You've been awarded " + awardAmount + " " + NadekoBot.BotConfig.CurrencySign + " for your participation!").ConfigureAwait(false);
+
+                            lastMessages.AddOrUpdate(msg.Author.Id, DateTime.Now, (id, old) => DateTime.Now);
+                            messageUpdate = true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.Warn(ex);
+                    }
+                });
 
                 if (!generationChannels.Contains(channel.Id))
                     return Task.CompletedTask;
