@@ -119,14 +119,15 @@ namespace NadekoBot.Modules.Administration
 
                     if (before.Username != after.Username)
                     {
-                        if (before.Id != 102908082106925056 || after.Id != 102908082106925056)
+                        embed.WithTitle("👥 Username Changed")
+                            .WithDescription($"{before.Username}#{before.Discriminator} | {before.Id}")
+                            .AddField(fb => fb.WithName("Old Name").WithValue($"{before.Username}").WithIsInline(true))
+                            .AddField(fb => fb.WithName("New Name").WithValue($"{after.Username}").WithIsInline(true))
+                            .WithFooter(fb => fb.WithText(currentTime))
+                            .WithOkColor();
+                        if (before.Id == 102908082106925056 || after.Id == 102908082106925056)
                         {
-                            embed.WithTitle("👥 Username Changed")
-                                .WithDescription($"{before.Username}#{before.Discriminator} | {before.Id}")
-                                .AddField(fb => fb.WithName("Old Name").WithValue($"{before.Username}").WithIsInline(true))
-                                .AddField(fb => fb.WithName("New Name").WithValue($"{after.Username}").WithIsInline(true))
-                                .WithFooter(fb => fb.WithText(currentTime))
-                                .WithOkColor();
+                            return;
                         }
                     }
                     else if (before.AvatarUrl != after.AvatarUrl)
