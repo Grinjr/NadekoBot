@@ -22,9 +22,6 @@ namespace NadekoBot.Modules.Gambling
         public static string CurrencyPluralName { get; set; }
         public static string CurrencySign { get; set; }
 
-        private List<IDMChannel> ownerChannels { get; set; }
-        private readonly DiscordShardedClient _client;
-
         public static string coloredNamesFile = "data/ColoredNames.txt";
 
         static Gambling()
