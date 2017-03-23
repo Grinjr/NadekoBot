@@ -189,14 +189,14 @@ namespace NadekoBot.Modules.Gambling
                 {
                     var res = SlotMachine.Pull();
                     
-                    if (res.Multiplier == 4)
-                    {
-                        var rand = new Random().Next(1, Convert.ToInt32(Math.Pow(4, winCount)));
-                        if (rand != 1)
-                        {
-                            res = SlotMachine.Pull();
-                        }
-                    }
+                    //if (res.Multiplier == 4)
+                    //{
+                    //    var rand = new Random().Next(1, Convert.ToInt32(Math.Pow(4, winCount)));
+                    //    if (rand != 1)
+                    //    {
+                    //        res = SlotMachine.Pull();
+                    //    }
+                    //}
                     if (dict.ContainsKey(res.Multiplier))
                     {
                         dict[res.Multiplier] += 1;
@@ -275,18 +275,18 @@ namespace NadekoBot.Modules.Gambling
                                 }
                             }
 
-                            var rand = new Random().Next(0, Convert.ToInt32(Math.Pow(winCount, 4)));
-                            if (rand != 0)
-                            {
-                                result = SlotMachine.Pull();
-                            }
+                            //var rand = new Random().Next(0, Convert.ToInt32(Math.Pow(winCount, 4)));
+                            //if (rand != 0)
+                            //{
+                            //    result = SlotMachine.Pull();
+                            //}
                         }
 
                         if (amount > 1 && result.Multiplier <= 2 && result.Multiplier != 1)
                         {
                             if (currentPot <= 0)
                                 currentPot = 0;
-                            potTempPool += amount * 0.5;
+                            potTempPool += amount * 0.75;
                             if (potTempPool >= 1)
                             {
                                 for (int i = 1; i <= potTempPool; potTempPool -= i)
@@ -333,7 +333,7 @@ namespace NadekoBot.Modules.Gambling
                                 case 3: case 5:
                                     if (currentPot >= amount * (result.Multiplier - 1))
                                     {
-                                        currentPot -= amount * (result.Multiplier - 1);
+                                        currentPot -= (amount * (result.Multiplier - 1)) / 2;
                                     }
                                     else
                                     {

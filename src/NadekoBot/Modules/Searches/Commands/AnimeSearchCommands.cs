@@ -51,7 +51,8 @@ namespace NadekoBot.Modules.Searches
                     }
                     catch (Exception ex)
                     {
-                        _log.Error(ex);
+                        // Annoying me
+                        //_log.Error(ex);
                     }
                 }, null, TimeSpan.FromSeconds(0), TimeSpan.FromMinutes(29));
             }

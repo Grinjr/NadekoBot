@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using ImageSharp;
 using System.IO;
 using System.Threading;
+using Discord.WebSocket;
 
 namespace NadekoBot.Modules.Gambling
 {
@@ -20,6 +21,9 @@ namespace NadekoBot.Modules.Gambling
         public static string CurrencyName { get; set; }
         public static string CurrencyPluralName { get; set; }
         public static string CurrencySign { get; set; }
+
+        private List<IDMChannel> ownerChannels { get; set; }
+        private readonly DiscordShardedClient _client;
 
         public static string coloredNamesFile = "data/ColoredNames.txt";
 
@@ -378,7 +382,7 @@ namespace NadekoBot.Modules.Gambling
         {
             if (args.Count() == 0)
             {
-                await Context.Channel.SendErrorAsync("❌ The parameters specified are **invalid.**").ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync("Welcome to the shop! Here are some things available in the shop that you can purchase!\n\n`$shop namecolor red` - 30 " + CurrencySign + " for a name color of a preset color. Available preset colors are: red, orange, yellow, brown, green, lime, pink, black, white, gold, and silver.\n`$shop namecolor #FF0000` - 60 " + CurrencySign + " for a name color using any custom color you would like, in hexadecimal color format.\n`$shop sticker` - 150 " + CurrencySign + " This is a limited time item available in the shop. Limit one per user please!").ConfigureAwait(false);
                 return;
             }
 
@@ -390,6 +394,47 @@ namespace NadekoBot.Modules.Gambling
             using (var uow = DbHandler.UnitOfWork())
             {
                 userCurrency = uow.Currency.GetOrCreate(Context.User.Id).Amount;
+            }
+
+            // Sticker Shop Item
+            if (args[0] == "sticker")
+            {
+                long cost = 150;
+
+                // Test if user has enough money
+                if (userCurrency < cost)
+                {
+                    await Context.Channel.SendErrorAsync($"{Context.User.Mention} You don't have enough {Gambling.CurrencyPluralName}. You only have {userCurrency}{Gambling.CurrencySign} and need {cost}.\n\n{cost - userCurrency} more to go!").ConfigureAwait(false);
+                    return;
+                }
+
+                // Remove currency from user
+                await CurrencyHandler.RemoveCurrencyAsync(Context.User, "Bought Sticker", cost, false).ConfigureAwait(false);
+                
+                await Context.Channel.SendConfirmAsync($"Thanks for purchasing a sticker! Please keep in mind that a sticker is one per person!", $"{cost} {Gambling.CurrencySign} has been deducted from your account. Please come again!");
+                string msg = "";
+                foreach (ulong id in NadekoBot.Credentials.OwnerIds)
+                {
+                    IGuildUser tempuser = await Context.Guild.GetUserAsync(System.Convert.ToUInt64(id));
+                    await tempuser.SendConfirmAsync($"💵 {Context.Message.Author.Mention} just bought a sticker! {cost} {CurrencySign} has been deducted from their account.\n▪ Please contact them and have them to fill out a sticker commission form!");
+
+                    if (msg == "")
+                    {
+                        msg = tempuser.Mention;
+                    }
+                    else
+                    {
+                        msg = msg + " or " + tempuser.Mention;
+                    }
+                }
+                await Context.User.SendConfirmAsync("Hello! You have purchased a sticker, so in order to continue please fill out this form:\n\n```\n" +
+                    "-Character Ref(s): \n" +
+                    "-Character Peronality / info: \n" +
+                    "-Pose / What the character is doing in the Sticker: \n" +
+                    "-Outline Stroke: \n" +
+                    "-Anthro or Feral ?: \n" +
+                    "-Misc Info / Comments: \n\n" +
+                    $"```\nOnce you have finished filling out the form, please send it to {msg}! Thanks!");
             }
 
             // Name Color Shop Item
@@ -409,7 +454,7 @@ namespace NadekoBot.Modules.Gambling
                 // Test if user has enough money
                 if (userCurrency < cost)
                 {
-                    await Context.Channel.SendErrorAsync($"{Context.User.Mention} You don't have enough {Gambling.CurrencyPluralName}. You only have {userCurrency}{Gambling.CurrencySign} and need {cost}.\n\n{cost - userCurrency} more to go!").ConfigureAwait(false);
+                    await Context.Channel.SendErrorAsync($"{Context.User.Mention} You don't have enough {Gambling.CurrencyPluralName}. You only have {userCurrency} {Gambling.CurrencySign} and need {cost}.\n\n{cost - userCurrency} more to go!").ConfigureAwait(false);
                     return;
                 }
 
@@ -442,7 +487,7 @@ namespace NadekoBot.Modules.Gambling
 
                     await Context.Channel.EmbedAsync(
                         new EmbedBuilder().WithColor(role.Color)
-                            .AddField(efb => efb.WithName($"You now have a {args[1]} name color!").WithValue($"{cost}{Gambling.CurrencySign} has been deducted from your account. Please come again!").WithIsInline(true)));
+                            .AddField(efb => efb.WithName($"You now have a {args[1]} name color!").WithValue($"{cost} {Gambling.CurrencySign} has been deducted from your account. Please come again!").WithIsInline(true)));
                 }
 
 
@@ -609,12 +654,22 @@ namespace NadekoBot.Modules.Gambling
         }
 
         [NadekoCommand, Usage, Description, Aliases]
-        public async Task Leaderboard()
+        public async Task Leaderboard(params string[] args)
         {
+            int topAmount = 5;
+            if (args.Count() != 0)
+            {
+                if (int.TryParse(args[0], out topAmount) && args[0] != "0") { }
+                else
+                {
+                    await Context.Channel.SendErrorAsync("❌ The parameters specified are **invalid.**").ConfigureAwait(false);
+                    return;
+                }
+            }
             var richest = new List<Currency>();
             using (var uow = DbHandler.UnitOfWork())
             {
-                richest = uow.Currency.GetTopRichest(5).ToList();
+                richest = uow.Currency.GetTopRichest(topAmount).ToList();
             }
             if (!richest.Any())
                 return;
