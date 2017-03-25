@@ -657,7 +657,7 @@ namespace NadekoBot.Modules.Administration
                         return;
                     var embed = new EmbedBuilder()
                         .WithOkColor()
-                        .WithTitle($"🗑 Message Deleted in {((ITextChannel)msg.Channel).Mention}")
+                        .WithTitle($"🗑 Message Deleted in #{((ITextChannel)msg.Channel).Name} ({((ITextChannel)msg.Channel).Id})")
                         .WithDescription($"{msg.Author}")
                         .AddField(efb => efb.WithName("Content").WithValue(msg.Resolve(userHandling: TagHandling.FullName)).WithIsInline(false))
                         .AddField(efb => efb.WithName("Id").WithValue(msg.Id.ToString()).WithIsInline(false))
