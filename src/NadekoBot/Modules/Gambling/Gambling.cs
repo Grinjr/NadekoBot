@@ -377,11 +377,7 @@ namespace NadekoBot.Modules.Gambling
         [RequireContext(ContextType.Guild)]
         public async Task Shop(params string[] args) //string item, string shopparams, [Remainder] string extraparams = null
         {
-            if (args.Count() == 0)
-            {
-                await Context.Channel.SendConfirmAsync("Welcome to the shop! Here are some things available in the shop that you can purchase!\n\n`$shop namecolor red` - 30 " + CurrencySign + " for a name color of a preset color. Available preset colors are: red, orange, yellow, brown, green, lime, pink, black, white, gold, and silver.\n`$shop namecolor #FF0000` - 60 " + CurrencySign + " for a name color using any custom color you would like, in hexadecimal color format.\n~~`$shop sticker` - 150 " + CurrencySign + " This is a limited time item available in the shop. Limit one per user please!~~ **EXPIRED! Sorry about that!** These will be available again during the next sticker event, so keep an eye out!").ConfigureAwait(false);
-                return;
-            }
+            //if (args.Count() == 0)
 
             // Get user
             IGuildUser user = await Context.Guild.GetUserAsync(Context.User.Id);
@@ -442,7 +438,7 @@ namespace NadekoBot.Modules.Gambling
             }
 
             // Name Color Shop Item
-            if (args[0] == "namecolor")
+            else if (args[0] == "namecolor")
             {
                 long cost = 30;
                 bool custom = false;
@@ -608,6 +604,11 @@ namespace NadekoBot.Modules.Gambling
                     System.IO.File.AppendAllText(coloredNamesFile, System.Environment.NewLine);
                 }
                 System.IO.File.AppendAllText(coloredNamesFile, Context.User.Id.ToString() + "," + System.DateTime.Now.AddMonths(1).ToString());
+            }
+            else
+            {
+                await Context.Channel.SendConfirmAsync("Welcome to the shop! Here are some things available in the shop that you can purchase!\n\n`$shop namecolor red` - 30 " + CurrencySign + " for a name color of a preset color. Available preset colors are: red, orange, yellow, brown, green, lime, pink, black, white, gold, and silver.\n`$shop namecolor #FF0000` - 60 " + CurrencySign + " for a name color using any custom color you would like, in hexadecimal color format.\n~~`$shop sticker` - 150 " + CurrencySign + " This is a limited time item available in the shop. Limit one per user please!~~ **EXPIRED! Sorry about that!** These will be available again during the next sticker event, so keep an eye out!").ConfigureAwait(false);
+                return;
             }
         }
 
