@@ -377,8 +377,6 @@ namespace NadekoBot.Modules.Gambling
         [RequireContext(ContextType.Guild)]
         public async Task Shop(params string[] args) //string item, string shopparams, [Remainder] string extraparams = null
         {
-            //if (args.Count() == 0)
-
             // Get user
             IGuildUser user = await Context.Guild.GetUserAsync(Context.User.Id);
 
@@ -390,7 +388,7 @@ namespace NadekoBot.Modules.Gambling
             }
 
             // Sticker Shop Item
-            if (args[0] == "sticker")
+            if (args.Count() > 0 && args[0] == "sticker")
             {
                 bool expired = true;
 
@@ -438,7 +436,7 @@ namespace NadekoBot.Modules.Gambling
             }
 
             // Name Color Shop Item
-            else if (args[0] == "namecolor")
+            else if (args.Count() > 0 && args[0] == "namecolor")
             {
                 long cost = 30;
                 bool custom = false;
