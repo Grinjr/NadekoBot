@@ -379,7 +379,7 @@ namespace NadekoBot.Modules.Gambling
         {
             if (args.Count() == 0)
             {
-                await Context.Channel.SendConfirmAsync("Welcome to the shop! Here are some things available in the shop that you can purchase!\n\n`$shop namecolor red` - 30 " + CurrencySign + " for a name color of a preset color. Available preset colors are: red, orange, yellow, brown, green, lime, pink, black, white, gold, and silver.\n`$shop namecolor #FF0000` - 60 " + CurrencySign + " for a name color using any custom color you would like, in hexadecimal color format.\n`$shop sticker` - 150 " + CurrencySign + " This is a limited time item available in the shop. Limit one per user please!").ConfigureAwait(false);
+                await Context.Channel.SendConfirmAsync("Welcome to the shop! Here are some things available in the shop that you can purchase!\n\n`$shop namecolor red` - 30 " + CurrencySign + " for a name color of a preset color. Available preset colors are: red, orange, yellow, brown, green, lime, pink, black, white, gold, and silver.\n`$shop namecolor #FF0000` - 60 " + CurrencySign + " for a name color using any custom color you would like, in hexadecimal color format.\n~~`$shop sticker` - 150 " + CurrencySign + " This is a limited time item available in the shop. Limit one per user please!~~ EXPIRED! Sorry about that! These will be available again during the next sticker event, so keep an eye out!").ConfigureAwait(false);
                 return;
             }
 
@@ -396,6 +396,13 @@ namespace NadekoBot.Modules.Gambling
             // Sticker Shop Item
             if (args[0] == "sticker")
             {
+                bool expired = true;
+
+                if (expired) {
+                    await Context.Channel.SendErrorAsync("Woops! Sorry about that, " + Context.User.Mention + "! Stickers are no longer available to be purchased in the shop, as the sticker event has expired! Keep your eye out for the next sticker event!").ConfigureAwait(false);
+                    return;
+                }
+
                 long cost = 150;
 
                 // Test if user has enough money
